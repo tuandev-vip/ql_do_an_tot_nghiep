@@ -13,5 +13,6 @@ class BatchLoaded extends BatchState {
 
 class BatchError extends BatchState {
   final String message;
-  BatchError(this.message);
+  final List<BatchModel> batches;
+  BatchError(this.message, {this.batches = const []});
 }

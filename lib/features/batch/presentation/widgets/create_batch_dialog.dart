@@ -1,91 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/main.dart';
 import 'dart:convert';
 
-import 'package:ql_do_an_tot_nghiep/main.dart';
+import '../../data/models/batch_model.dart';
+import '../bloc/batch_bloc.dart';
+import '../bloc/batch_event.dart';
 
 class CreateBatchDialog extends StatefulWidget {
-  const CreateBatchDialog({super.key});
+  final BatchModel? batch; // Thêm biến này: null là Tạo, có dữ liệu là Cập nhật
+  const CreateBatchDialog({super.key, this.batch});
 
   @override
   State<CreateBatchDialog> createState() => _CreateBatchDialogState();
 }
 
 class _CreateBatchDialogState extends State<CreateBatchDialog> {
-  final _nameController = TextEditingController();
+  late TextEditingController _nameController;
   String? _selectedTemplateId;
   List<dynamic> _templates = [];
-  bool _isLoading = false;
+  bool _isFetchingTemplates = false;
 
   @override
   void initState() {
     super.initState();
+    // 1. Khởi tạo dữ liệu dựa trên việc là Tạo hay Sửa
+    _nameController = TextEditingController(
+      text: widget.batch?.batchName ?? "",
+    );
+    _selectedTemplateId = widget.batch?.templateId;
     _getTemplates();
   }
 
+  // Vẫn giữ hàm này ở đây để lấy danh sách Timeline cấu trúc
   Future<void> _getTemplates() async {
+    setState(() => _isFetchingTemplates = true);
     try {
-      // Nhớ thay IP chuẩn của ông vào đây
       final response = await http.get(
         Uri.parse(
           "http://192.168.1.109/ql_do_an_api/api/batch/get_templates.php",
         ),
       );
       final data = jsonDecode(response.body);
-      if (data['status'] == 'success') {
+      if (data['status'] == 'success' && mounted) {
         setState(() => _templates = data['data']);
       }
     } catch (e) {
       debugPrint("Lỗi tải template: $e");
+    } finally {
+      if (mounted) setState(() => _isFetchingTemplates = false);
     }
   }
 
-  Future<void> _createBatch() async {
+  // HÀM XỬ LÝ LƯU (DÙNG BLOC)
+  void _onSave() {
     if (_nameController.text.isEmpty || _selectedTemplateId == null) {
       _showSnackBar("Vui lòng điền đủ thông tin!", Colors.orange);
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await http
-          .post(
-            Uri.parse(
-              "http://192.168.1.109/ql_do_an_api/api/batch/create_batch.php",
-            ),
-            body: {
-              "batch_name": _nameController.text,
-              "template_id": _selectedTemplateId,
-            },
-          )
-          .timeout(const Duration(seconds: 10));
-
-      // Kiểm tra xem dữ liệu có trống không trước khi Decode
-      if (response.body.isEmpty) {
-        throw Exception("Server trả về dữ liệu trống");
-      }
-
-      final data = jsonDecode(response.body);
-
-      if (data['status'] == 'success') {
-        // Đóng trước, hiện sau cho nó mượt
-        if (mounted) Navigator.pop(context);
-        _showSnackBar(data['message'], Colors.green);
-      } else {
-        // Lỗi nghiệp vụ (Trùng đợt) cũng đóng luôn để thoát đơ
-        if (mounted) Navigator.pop(context);
-        _showSnackBar(data['message'], Colors.red);
-      }
-    } catch (e) {
-      debugPrint("Lỗi API: $e");
-      // Khi lỗi cũng phải ĐÓNG DIALOG để người dùng thao tác tiếp được
-      if (mounted) Navigator.pop(context);
-      _showSnackBar("Có lỗi xảy ra: $e", Colors.red);
-    } finally {
-      // Dòng này rất quan trọng để dừng cái xoay tròn
-      if (mounted) setState(() => _isLoading = false);
+    if (widget.batch == null) {
+      // TRƯỜNG HỢP TẠO MỚI
+      context.read<BatchBloc>().add(
+        CreateBatchEvent(_nameController.text, _selectedTemplateId!),
+      );
+    } else {
+      // TRƯỜNG HỢP CẬP NHẬT
+      context.read<BatchBloc>().add(
+        UpdateBatchEvent(
+          widget.batch!.batchId,
+          _nameController.text,
+          _selectedTemplateId!,
+        ),
+      );
     }
+
+    // Đóng dialog ngay, BLoC sẽ lo việc cập nhật danh sách ở màn hình chính
+    Navigator.pop(context);
   }
 
   void _showSnackBar(String msg, Color color) {
@@ -96,6 +88,8 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    bool isUpdate = widget.batch != null;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
@@ -111,9 +105,12 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
                   child: const Icon(Icons.arrow_back_ios, size: 20),
                 ),
                 const SizedBox(width: 10),
-                const Text(
-                  "Tạo đợt mới",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  isUpdate ? "Cập nhật đợt" : "Tạo đợt mới",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -140,7 +137,7 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: _templates.isEmpty
+              child: _isFetchingTemplates
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.separated(
                       itemCount: _templates.length,
@@ -171,19 +168,17 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _createBatch,
+                onPressed: _onSave,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2196F3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "Lưu",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                child: const Text(
+                  "Lưu",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ),
           ],

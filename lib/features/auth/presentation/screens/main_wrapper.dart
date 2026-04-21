@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
-import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/BatchManagementScreen.dart';
+import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 
 class _NavConfig {
   final BottomNavigationBarItem item;
