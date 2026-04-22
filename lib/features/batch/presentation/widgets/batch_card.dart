@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 import '../../data/models/batch_model.dart';
 import '../bloc/batch_bloc.dart';
 import '../bloc/batch_event.dart';
@@ -27,7 +28,6 @@ class BatchCard extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              // Gọi BLoC để thực hiện đóng đợt
               context.read<BatchBloc>().add(CloseBatchEvent(batch.batchId));
               Navigator.pop(confirmContext);
             },
@@ -43,14 +43,17 @@ class BatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Logic kiểm tra trạng thái đóng/mở
     bool isClosed = batch.isClosed == 1;
 
-    // 2. Logic kiểm tra thời gian để cho phép Cập nhật
-    DateTime now = DateTime.now();
-    // Chuyển đổi String từ DB sang DateTime
-    DateTime? regDeadline = DateTime.tryParse(batch.advisorRegDeadline);
-    // Điều kiện: Chưa đến hạn reg_advisor và đợt chưa bị đóng
+    // 1. DÙNG GIỜ TỪ CỖ MÁY THỜI GIAN
+    DateTime now = TimeManager.now();
+
+    // 2. TRUY XUẤT DEADLINE TỪ MAP
+    DateTime? regDeadline = DateTime.tryParse(
+      batch.deadlines["Đăng ký Giảng viên"] ?? '',
+    );
+
+    // Điều kiện cập nhật: Chưa đến hạn reg_advisor và đợt chưa bị đóng
     bool canUpdate =
         (regDeadline != null) && now.isBefore(regDeadline) && !isClosed;
 
@@ -82,19 +85,37 @@ class BatchCard extends StatelessWidget {
           Row(
             children: [
               // NÚT ĐÓNG ĐỢT
+              // ... các đoạn khác giữ nguyên ...
+
+              // NÚT ĐÓNG ĐỢT
               Expanded(
                 child: OutlinedButton(
                   onPressed: isClosed
-                      ? null // Vô hiệu hóa nếu đã đóng
+                      ? null
                       : () {
-                          DateTime deadline = DateTime.parse(
-                            batch.councilTrAssignDeadline,
+                          // LẤY GIỜ MỚI NHẤT NGAY KHI BẤM NÚT
+                          DateTime liveNow = TimeManager.now();
+
+                          String key = "Phân Hội đồng trường";
+                          String? deadlineStr = batch.deadlines[key];
+                          DateTime? prevMilestone = DateTime.tryParse(
+                            deadlineStr ?? '',
                           );
-                          if (now.isBefore(deadline)) {
+
+                          print("--- DEBUG TIME MACHINE ---");
+                          print(
+                            "Giờ fake thực tế lúc bấm nút: $liveNow",
+                          ); // Dùng liveNow ở đây
+                          print("Mốc chặn ($key): $prevMilestone");
+                          print("--------------------------");
+
+                          // So sánh bằng liveNow để lấy giờ chuẩn nhất
+                          if (prevMilestone != null &&
+                              liveNow.isBefore(prevMilestone)) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(
-                                  "Chưa qua hạn phân công hội đồng trường, chưa được đóng đợt!",
+                                  "Chưa qua hạn $key, không được đóng đợt!",
                                 ),
                                 backgroundColor: Colors.orange,
                               ),
@@ -114,14 +135,17 @@ class BatchCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: canUpdate
-                      ? () {
-                          showDialog(
+                      ? () async {
+                          final batchBloc = context.read<BatchBloc>();
+                          await showDialog(
                             context: context,
-                            builder: (context) =>
-                                CreateBatchDialog(batch: batch),
+                            builder: (dialogContext) => BlocProvider.value(
+                              value: batchBloc,
+                              child: CreateBatchDialog(batch: batch),
+                            ),
                           );
                         }
-                      : null, // Tự động xám nút nếu không thỏa mãn canUpdate
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: canUpdate ? Colors.blue : Colors.grey,
                   ),
@@ -138,7 +162,6 @@ class BatchCard extends StatelessWidget {
     );
   }
 
-  // Widget hiển thị dòng thông tin chi tiết
   Widget _buildInfoRow(String label, String value, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

@@ -102,7 +102,14 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
 
     // 4. CẬP NHẬT ĐỢT
     on<UpdateBatchEvent>((event, emit) async {
-      final currentBatches = getCurrentBatches();
+      // Lấy danh sách hiện tại để nếu lỗi thì vẫn giữ được màn hình
+      List<BatchModel> currentBatches = [];
+      if (state is BatchLoaded) {
+        currentBatches = (state as BatchLoaded).batches;
+      } else if (state is BatchError) {
+        currentBatches = (state as BatchError).batches;
+      }
+
       try {
         final response = await http.post(
           Uri.parse(
@@ -114,15 +121,16 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
             "template_id": event.templateId,
           },
         );
-        final data = jsonDecode(response.body);
 
+        final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          add(LoadBatchesEvent());
+          add(LoadBatchesEvent()); // Cập nhật xong thì tải lại danh sách
         } else {
+          // Trả lại danh sách cũ kèm lỗi
           emit(BatchError(data['message'], batches: currentBatches));
         }
       } catch (e) {
-        emit(BatchError("Lỗi kết nối khi cập nhật!", batches: currentBatches));
+        emit(BatchError("Không thể kết nối Server!", batches: currentBatches));
       }
     });
   }

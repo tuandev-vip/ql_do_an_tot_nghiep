@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
+import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
-import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 
 class _NavConfig {
   final BottomNavigationBarItem item;
@@ -23,18 +27,33 @@ class _MainWrapperState extends State<MainWrapper> {
   List<_NavConfig> _buildNavigation() {
     List<_NavConfig> configs = [];
 
-    // 1. LUÔN CÓ: Trang chủ (Dashboard) cho tất cả mọi người
+    // 1. TRANG CHỦ: Phân quyền Dashboard theo Role
+    Widget homeScreen;
+    switch (widget.user.role) {
+      case 'DEAN':
+        // Trưởng khoa thấy Dashboard có Cỗ máy thời gian
+        homeScreen = const AdminDashboardScreen();
+        break;
+      case 'TBM':
+        homeScreen = _buildPlaceholderScreen("Dashboard Trưởng bộ môn");
+        break;
+      case 'TEACHER':
+        homeScreen = _buildPlaceholderScreen("Dashboard Giảng viên");
+        break;
+      case 'STUDENT':
+        homeScreen = _buildPlaceholderScreen("Dashboard Sinh viên");
+        break;
+      default:
+        homeScreen = _buildPlaceholderScreen("Trang chủ");
+    }
+
     configs.add(
       _NavConfig(
         item: const BottomNavigationBarItem(
           icon: Icon(Icons.grid_view_rounded),
           label: "Trang chủ",
         ),
-        screen: _buildPlaceholderScreen(
-          widget.user.role == 'TBM'
-              ? "Dashboard (Thống kê AI)"
-              : "Màn hình Trang chủ",
-        ),
+        screen: homeScreen,
       ),
     );
 
@@ -46,7 +65,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.assignment_ind_outlined),
             label: "ĐK GVHD",
           ),
-          screen: _buildPlaceholderScreen("ĐK GVHD"),
+          screen: _buildPlaceholderScreen("Đăng ký GVHD"),
         ),
       );
       configs.add(
@@ -55,16 +74,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.description_outlined),
             label: "Báo cáo",
           ),
-          screen: _buildPlaceholderScreen("Báo cáo"),
-        ),
-      );
-      configs.add(
-        _NavConfig(
-          item: const BottomNavigationBarItem(
-            icon: Icon(Icons.insert_chart_outlined),
-            label: "Hội đồng",
-          ),
-          screen: _buildPlaceholderScreen("Hội đồng"),
+          screen: _buildPlaceholderScreen("Nộp báo cáo tuần"),
         ),
       );
     }
@@ -76,7 +86,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.fact_check_outlined),
             label: "Kiểm duyệt",
           ),
-          screen: _buildPlaceholderScreen("Kiểm duyệt"),
+          screen: _buildPlaceholderScreen("Phê duyệt đề tài"),
         ),
       );
       configs.add(
@@ -85,16 +95,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.folder_shared_outlined),
             label: "Duyệt báo cáo",
           ),
-          screen: _buildPlaceholderScreen("Duyệt báo cáo"),
-        ),
-      );
-      configs.add(
-        _NavConfig(
-          item: const BottomNavigationBarItem(
-            icon: Icon(Icons.groups_outlined),
-            label: "Hội đồng",
-          ),
-          screen: _buildPlaceholderScreen("Hội đồng"),
+          screen: _buildPlaceholderScreen("Chấm báo cáo tuần"),
         ),
       );
     }
@@ -106,20 +107,20 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.person_add_alt_1_outlined),
             label: "Phân GV",
           ),
-          screen: _buildPlaceholderScreen("Phân GV"),
+          screen: _buildPlaceholderScreen("Phân Giảng viên hướng dẫn"),
         ),
       );
       configs.add(
         _NavConfig(
           item: const BottomNavigationBarItem(
             icon: Icon(Icons.groups_outlined),
-            label: "Phân hội đồng",
+            label: "Hội đồng",
           ),
-          screen: _buildPlaceholderScreen("Phân hội đồng"),
+          screen: _buildPlaceholderScreen("Quản lý Hội đồng cơ sở"),
         ),
       );
     }
-    // 5. LOGIC CHO TRƯỞNG KHOA (DEAN / ADMIN)
+    // 5. LOGIC CHO TRƯỞNG KHOA (DEAN)
     else if (widget.user.role == 'DEAN') {
       configs.add(
         _NavConfig(
@@ -136,21 +137,12 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.analytics_outlined),
             label: "Thống kê",
           ),
-          screen: _buildPlaceholderScreen("Thống kê"),
-        ),
-      );
-      configs.add(
-        _NavConfig(
-          item: const BottomNavigationBarItem(
-            icon: Icon(Icons.groups_outlined),
-            label: "Hội đồng",
-          ),
-          screen: _buildPlaceholderScreen("Hội đồng"),
+          screen: _buildPlaceholderScreen("Thống kê toàn khoa"),
         ),
       );
     }
 
-    // 6.  Cá nhân
+    // 6. TAB CÁ NHÂN (Luôn có cho tất cả mọi người)
     configs.add(
       _NavConfig(
         item: const BottomNavigationBarItem(
@@ -168,27 +160,30 @@ class _MainWrapperState extends State<MainWrapper> {
   Widget build(BuildContext context) {
     final List<_NavConfig> navConfigs = _buildNavigation();
 
-    // Reset index nếu role thay đổi hoặc số lượng tab thay đổi để tránh crash
+    // Reset index nếu role thay đổi để tránh lỗi index out of bounds
     if (_currentIndex >= navConfigs.length) {
       _currentIndex = 0;
     }
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: navConfigs.map((config) => config.screen).toList(),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type:
-            BottomNavigationBarType.fixed, // Giữ icon cố định khi có nhiều tab
-        selectedItemColor: const Color(0xFF2196F3),
-        unselectedItemColor: Colors.grey[600],
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        showUnselectedLabels: true,
-        items: navConfigs.map((config) => config.item).toList(),
+    return BlocProvider(
+      create: (context) =>
+          BatchBloc()..add(LoadBatchesEvent()), // Load dữ liệu ngay từ đầu
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: navConfigs.map((config) => config.screen).toList(),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF2196F3),
+          unselectedItemColor: Colors.grey[600],
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          showUnselectedLabels: true,
+          items: navConfigs.map((config) => config.item).toList(),
+        ),
       ),
     );
   }
@@ -196,19 +191,23 @@ class _MainWrapperState extends State<MainWrapper> {
   Widget _buildPlaceholderScreen(String title) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF2196F3),
+        centerTitle: true,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const Icon(Icons.construction, size: 60, color: Colors.grey),
+            const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
-            Text("User: ${widget.user.fullName} (${widget.user.role})"),
+            const SizedBox(height: 8),
+            Text("Người dùng: ${widget.user.fullName}"),
+            Text("Quyền hạn: ${widget.user.role}"),
           ],
         ),
       ),
