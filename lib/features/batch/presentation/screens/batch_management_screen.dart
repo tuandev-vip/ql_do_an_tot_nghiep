@@ -81,28 +81,4 @@ class BatchManagementScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildHeader(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      width: 100,
-      child: FloatingActionButton(
-        onPressed: () async {
-          final batchBloc = context.read<BatchBloc>();
-          await showDialog(
-            context: context,
-            builder: (dialogContext) => BlocProvider.value(
-              value: batchBloc,
-              child: const CreateBatchDialog(),
-            ),
-          );
-        },
-
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [const Icon(Icons.add), const Text("  Tạo Đợt")],
-        ),
-      ),
-    );
-  }
 }

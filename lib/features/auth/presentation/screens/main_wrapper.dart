@@ -6,6 +6,8 @@ import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_ma
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
 
 class _NavConfig {
   final BottomNavigationBarItem item;
@@ -165,9 +167,13 @@ class _MainWrapperState extends State<MainWrapper> {
       _currentIndex = 0;
     }
 
-    return BlocProvider(
-      create: (context) =>
-          BatchBloc()..add(LoadBatchesEvent()), // Load dữ liệu ngay từ đầu
+    return MultiBlocProvider(
+      providers: [
+        // 1. Giữ nguyên BatchBloc
+        BlocProvider(create: (context) => BatchBloc()..add(LoadBatchesEvent())),
+        // 2. THÊM UserBloc vào đây
+        BlocProvider(create: (context) => UserBloc()..add(FetchUsersEvent())),
+      ],
       child: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
