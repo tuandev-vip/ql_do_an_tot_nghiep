@@ -1,6 +1,6 @@
 # ql_do_an_tot_nghiep
 
-A new Flutter project.
+Đây là úng dụng hỗ trợ quản lý quá trình làm đồ án tốt nghiệp
 
 ## Getting Started
 
