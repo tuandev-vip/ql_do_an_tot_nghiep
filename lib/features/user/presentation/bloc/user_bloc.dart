@@ -2,11 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'user_event.dart';
-import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_model.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart';
 import 'user_state.dart';
 
 class UserBloc extends Bloc<UserEvent, UserState> {
-  List<UserModel> _allUsers = []; // Biến static trong Bloc để giữ danh sách gốc
+  List<UserDataModel> _allUsers =
+      []; // Biến static trong Bloc để giữ danh sách gốc
 
   UserBloc() : super(UserInitial()) {
     // 1. Lấy danh sách ban đầu
@@ -18,7 +19,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         );
         if (response.statusCode == 200) {
           final List data = json.decode(response.body);
-          _allUsers = data.map((json) => UserModel.fromJson(json)).toList();
+          _allUsers = data.map((json) => UserDataModel.fromJson(json)).toList();
           _emitLoadedState(emit);
         }
       } catch (e) {

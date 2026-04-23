@@ -15,7 +15,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       emit(RegistrationLoading());
       try {
         final response = await http.get(
-          Uri.parse("http://192.168.1.109/ql_do_an_api/admin/get_teachers.php"),
+          Uri.parse(
+            "http://192.168.1.109/ql_do_an_api/student/get_teachers.php?student_id=${event.studentId}",
+          ),
         );
         if (response.statusCode == 200) {
           final List data = json.decode(response.body);
@@ -25,7 +27,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
           emit(TeachersLoaded(_allTeachers));
         }
       } catch (e) {
-        emit(RegistrationError("Không thể lấy danh sách giảng viên"));
+        emit(RegistrationError("Không thể lấy danh sách giảng viên", []));
       }
     });
 
@@ -41,6 +43,48 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
               teacher.teacherCode.toLowerCase().contains(query);
         }).toList();
         emit(TeachersLoaded(filtered));
+      }
+    });
+
+    // Tìm đến đoạn on<SubmitRegistrationEvent>...
+    on<SubmitRegistrationEvent>((event, emit) async {
+      try {
+        final response = await http.post(
+          Uri.parse(
+            "http://192.168.1.109/ql_do_an_api/student/submit_registration.php",
+          ),
+          body: {
+            'teacher_id': event.teacherId,
+            'topic_direction': event.topicDirection,
+            'student_id': event.studentId,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final resData = json.decode(response.body);
+
+          // SỬA Ở ĐÂY: Kiểm tra ['status'] == 'success' thay vì ['success'] == true
+          if (resData['status'] == 'success') {
+            emit(
+              RegistrationSuccess(
+                resData['message'],
+                event.teacherId,
+                _allTeachers,
+              ),
+            );
+          } else {
+            emit(
+              RegistrationError(
+                resData['message'] ?? "Đăng ký thất bại",
+                _allTeachers,
+              ),
+            );
+          }
+        } else {
+          emit(RegistrationError("Lỗi kết nối Server", _allTeachers));
+        }
+      } catch (e) {
+        emit(RegistrationError("Lỗi hệ thống: $e", _allTeachers));
       }
     });
   }

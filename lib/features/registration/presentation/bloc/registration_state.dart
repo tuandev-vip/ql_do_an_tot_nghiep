@@ -17,10 +17,13 @@ class RegistrationSubmitting extends RegistrationState {}
 
 class RegistrationSuccess extends RegistrationState {
   final String message;
-  RegistrationSuccess(this.message);
+  final String teacherId;
+  final List<TeacherModel> teachers;
+  RegistrationSuccess(this.message, this.teacherId, this.teachers);
 }
 
 class RegistrationError extends RegistrationState {
   final String message;
-  RegistrationError(this.message);
+  final List<TeacherModel> teachers;
+  RegistrationError(this.message, this.teachers);
 }

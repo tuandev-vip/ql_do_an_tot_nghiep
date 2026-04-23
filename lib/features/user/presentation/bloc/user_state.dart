@@ -1,4 +1,4 @@
-import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_model.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart';
 
 abstract class UserState {}
 
@@ -7,7 +7,7 @@ class UserInitial extends UserState {}
 class UserLoading extends UserState {}
 
 class UserLoaded extends UserState {
-  final List<UserModel> users; // Danh sách hiển thị (đã lọc hoặc tất cả)
+  final List<UserDataModel> users; // Danh sách hiển thị (đã lọc hoặc tất cả)
   final int teacherCount;
   final int studentCount;
   UserLoaded({

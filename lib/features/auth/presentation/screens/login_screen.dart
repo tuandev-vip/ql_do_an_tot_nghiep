@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/auth/presentation/screens/main_wrapper.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -32,18 +33,25 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           }
           if (state is AuthSuccess) {
-            // 1. Hiển thị thông báo chào mừng
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Chào mừng ${state.user.fullName}!"),
-                backgroundColor: Colors.green,
-              ),
-            );
-
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => MainWrapper(user: state.user),
+                builder: (context) => MainWrapper(
+                  // 1. Giữ nguyên user cho phần Auth
+                  user: state.user,
+
+                  // 2. Map dữ liệu sang UserDataModel mà không cần sửa class
+                  userData: UserDataModel(
+                    // userId (int) bên Auth -> id (String) bên User
+                    id: state.user.userId.toString(),
+                    fullName: state.user.fullName,
+                    role: state.user.role,
+                    // userCode (Mã SV) bên Auth -> username bên User
+                    username: state.user.userCode,
+                    // Mặc định là true vì đã đăng nhập thành công
+                    isParticipating: true,
+                  ),
+                ),
               ),
             );
           }

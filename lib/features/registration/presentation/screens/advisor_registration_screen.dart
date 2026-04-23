@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/registration_bloc.dart';
 import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
+import '../widgets/teacher_card.dart';
 import '../../../user/data/models/teacher_model.dart';
 
 class AdvisorRegistrationScreen extends StatefulWidget {
-  const AdvisorRegistrationScreen({super.key});
+  final String studentId;
+  const AdvisorRegistrationScreen({super.key, required this.studentId});
 
   @override
   State<AdvisorRegistrationScreen> createState() =>
@@ -14,11 +16,14 @@ class AdvisorRegistrationScreen extends StatefulWidget {
 }
 
 class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
+  // Biến dùng để khóa giao diện (xám nút) khi sinh viên đã gửi yêu cầu thành công
+  String? registeredTeacherId;
+
   @override
   void initState() {
     super.initState();
     // Vừa vào màn hình là gọi lấy danh sách giảng viên ngay
-    context.read<RegistrationBloc>().add(FetchTeachersEvent());
+    context.read<RegistrationBloc>().add(FetchTeachersEvent(widget.studentId));
   }
 
   @override
@@ -33,131 +38,123 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
       ),
-      body: Column(
-        children: [
-          // 1. THANH TÌM KIẾM
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              onChanged: (value) {
-                // Gửi từ khóa vào Bloc để lọc
-                context.read<RegistrationBloc>().add(SearchTeacherEvent(value));
-              },
-              decoration: InputDecoration(
-                hintText: "Nhập tên giảng viên...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+      body: BlocListener<RegistrationBloc, RegistrationState>(
+        listener: (context, state) {
+          if (state is RegistrationSuccess) {
+            // 1. Hiện SnackBar xanh báo thành công
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+
+            // 2. Cập nhật biến trạng thái để UI xám nút ngay lập tức
+            setState(() {
+              registeredTeacherId = state.teacherId;
+            });
+
+            // 3. Tải lại danh sách để cập nhật số lượng sinh viên (ví dụ 0/8 lên 1/8)
+            context.read<RegistrationBloc>().add(
+              FetchTeachersEvent(widget.studentId),
+            );
+          } else if (state is RegistrationError) {
+            // Hiện SnackBar đỏ báo lỗi
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        child: Column(
+          children: [
+            // 1. THANH TÌM KIẾM
+            _buildSearchField(context),
+
+            // 2. DANH SÁCH GIẢNG VIÊN
+            Expanded(
+              child: BlocBuilder<RegistrationBloc, RegistrationState>(
+                builder: (context, state) {
+                  if (state is RegistrationLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Hứng dữ liệu từ tất cả các trạng thái có chứa list giảng viên
+                  if (state is TeachersLoaded) {
+                    return _buildTeacherList(state.teachers);
+                  }
+                  if (state is RegistrationSuccess) {
+                    return _buildTeacherList(state.teachers);
+                  }
+                  if (state is RegistrationError) {
+                    return _buildTeacherList(state.teachers);
+                  }
+
+                  return const SizedBox.shrink();
+                },
               ),
             ),
-          ),
-
-          // 2. DANH SÁCH GIẢNG VIÊN
-          Expanded(
-            child: BlocBuilder<RegistrationBloc, RegistrationState>(
-              builder: (context, state) {
-                if (state is RegistrationLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is TeachersLoaded) {
-                  return ListView.builder(
-                    itemCount: state.teachers.length,
-                    itemBuilder: (context, index) =>
-                        _buildTeacherCard(context, state.teachers[index]),
-                  );
-                } else if (state is RegistrationError) {
-                  return Center(
-                    child: Text(
-                      state.message,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                }
-                return const SizedBox();
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Widget Card Giảng viên
-  Widget _buildTeacherCard(BuildContext context, TeacherModel teacher) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                teacher.fullName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                "Số lượng: ${teacher.currentStudents}/${teacher.maxStudents}",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildInfoRow("Email", teacher.email),
-          _buildInfoRow("Bộ môn", teacher.departmentName),
-          _buildInfoRow("Số điện thoại", teacher.phone),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () =>
-                  _showRegDialog(context, teacher), // Bước tiếp theo làm Dialog
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                "Đăng ký giảng viên",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
+  // Hàm vẽ danh sách giảng viên
+  Widget _buildTeacherList(List<TeacherModel> teachers) {
+    // 1. Kiểm tra: Sinh viên đã đăng ký chưa? (Dù là vừa ấn xong hay dữ liệu từ DB)
+    bool hasAnyRequest =
+        registeredTeacherId != null ||
+        teachers.any((t) => t.myRegistrationStatus != null);
+
+    return ListView.builder(
+      itemCount: teachers.length,
+      padding: const EdgeInsets.only(bottom: 20),
+      itemBuilder: (context, index) {
+        final teacher = teachers[index];
+
+        // 2. Kiểm tra: Đây có phải giảng viên được chọn không?
+        bool isThisTeacher =
+            (teacher.id == registeredTeacherId) ||
+            (teacher.myRegistrationStatus != null);
+
+        return TeacherCard(
+          teacher: teacher,
+          studentId: widget.studentId,
+          isThisTeacher: isThisTeacher, // Dùng biến logic vừa tạo
+          hasAnyRequest: hasAnyRequest, // Dùng biến logic vừa tạo
+        );
+      },
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  // Widget thanh tìm kiếm
+  Widget _buildSearchField(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(value, style: const TextStyle(color: Colors.black54)),
-        ],
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        onChanged: (value) =>
+            context.read<RegistrationBloc>().add(SearchTeacherEvent(value)),
+        decoration: InputDecoration(
+          hintText: "Nhập tên giảng viên...",
+          prefixIcon: const Icon(Icons.search),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
-  }
-
-  void _showRegDialog(BuildContext context, TeacherModel teacher) {
-    // Tạm thời để đây, lát mình sẽ làm cái Dialog nhập hướng đề tài
   }
 }

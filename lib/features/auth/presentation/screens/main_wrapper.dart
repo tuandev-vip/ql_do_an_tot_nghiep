@@ -11,6 +11,7 @@ import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.d
 // Thêm 3 dòng này Tuấn nhé
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_registration_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart'; // Đây là UserDataModel bên user
 
 class _NavConfig {
   final BottomNavigationBarItem item;
@@ -20,7 +21,8 @@ class _NavConfig {
 
 class MainWrapper extends StatefulWidget {
   final UserModel user;
-  const MainWrapper({super.key, required this.user});
+  final UserDataModel userData;
+  const MainWrapper({super.key, required this.user, required this.userData});
 
   @override
   State<MainWrapper> createState() => _MainWrapperState();
@@ -70,7 +72,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.assignment_ind_outlined),
             label: "ĐK GVHD",
           ),
-          screen: const AdvisorRegistrationScreen(),
+          screen: AdvisorRegistrationScreen(studentId: widget.userData.id),
         ),
       );
       configs.add(

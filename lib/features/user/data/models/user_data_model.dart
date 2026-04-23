@@ -1,4 +1,4 @@
-class UserModel {
+class UserDataModel {
   final String id;
   final String fullName;
   final String role;
@@ -6,7 +6,7 @@ class UserModel {
   final String? password;
   final bool isParticipating;
 
-  UserModel({
+  UserDataModel({
     required this.id,
     required this.fullName,
     required this.role,
@@ -15,8 +15,8 @@ class UserModel {
     required this.isParticipating,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory UserDataModel.fromJson(Map<String, dynamic> json) {
+    return UserDataModel(
       // Sử dụng 'id' vì PHP đã Alias: user_id AS id
       id: json['id']?.toString() ?? '',
       fullName: json['full_name'] ?? '',
@@ -32,14 +32,14 @@ class UserModel {
   }
 
   // Hàm copyWith cho phép cập nhật từng phần dữ liệu mà không làm mất các thông tin khác
-  UserModel copyWith({
+  UserDataModel copyWith({
     String? fullName,
     String? role,
     String? username,
     String? password,
     bool? isParticipating, // Thêm vào tham số để tránh lỗi Dead Code
   }) {
-    return UserModel(
+    return UserDataModel(
       id: id,
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
