@@ -8,6 +8,9 @@ import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
+// Thêm 3 dòng này Tuấn nhé
+import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_registration_screen.dart';
 
 class _NavConfig {
   final BottomNavigationBarItem item;
@@ -67,7 +70,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.assignment_ind_outlined),
             label: "ĐK GVHD",
           ),
-          screen: _buildPlaceholderScreen("Đăng ký GVHD"),
+          screen: const AdvisorRegistrationScreen(),
         ),
       );
       configs.add(
@@ -173,6 +176,8 @@ class _MainWrapperState extends State<MainWrapper> {
         BlocProvider(create: (context) => BatchBloc()..add(LoadBatchesEvent())),
         // 2. THÊM UserBloc vào đây
         BlocProvider(create: (context) => UserBloc()..add(FetchUsersEvent())),
+        //dang ky GVHD
+        BlocProvider(create: (context) => RegistrationBloc()),
       ],
       child: Scaffold(
         body: IndexedStack(
