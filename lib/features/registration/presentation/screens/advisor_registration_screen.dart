@@ -39,8 +39,12 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
+              onChanged: (value) {
+                // Gửi từ khóa vào Bloc để lọc
+                context.read<RegistrationBloc>().add(SearchTeacherEvent(value));
+              },
               decoration: InputDecoration(
-                hintText: "Tìm kiếm GVHD",
+                hintText: "Nhập tên giảng viên...",
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,

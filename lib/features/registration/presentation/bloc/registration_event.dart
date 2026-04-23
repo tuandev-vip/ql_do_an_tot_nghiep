@@ -9,3 +9,8 @@ class SubmitRegistrationEvent extends RegistrationEvent {
   final String topicDirection;
   SubmitRegistrationEvent(this.teacherId, this.topicDirection);
 }
+
+class SearchTeacherEvent extends RegistrationEvent {
+  final String query;
+  SearchTeacherEvent(this.query);
+}
