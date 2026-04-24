@@ -14,6 +14,8 @@ class AppUrls {
   static const String urlCreateBatch = "$baseUrl/api/batch/create_batch.php";
   static const String urlUpdateBatch = "$baseUrl/api/batch/update_batch.php";
   static const String urlGetTeamplate = "$baseUrl/api/batch/get_templates.php";
+  static const String urlCheckRegStatus =
+      "$baseUrl/api/batch/check_registration_status.php";
 
   //--- regostration ---
   static const String urlFetchTeachers = "$baseUrl/student/get_teachers.php";
