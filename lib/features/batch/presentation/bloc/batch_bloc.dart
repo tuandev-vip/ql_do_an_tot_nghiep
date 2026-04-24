@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
 import 'dart:convert';
 import 'batch_event.dart';
 import 'batch_state.dart';
@@ -22,11 +23,7 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
       final currentBatches = getCurrentBatches();
       emit(BatchLoading());
       try {
-        final response = await http.get(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/api/batch/get_batches.php",
-          ),
-        );
+        final response = await http.get(Uri.parse(AppUrls.urlGetBatches));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
@@ -56,9 +53,7 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
       final currentBatches = getCurrentBatches();
       try {
         final response = await http.post(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/api/batch/close_batch.php",
-          ),
+          Uri.parse(AppUrls.urlCloseBatch),
           body: {"batch_id": event.batchId},
         );
 
@@ -80,9 +75,7 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
       final currentBatches = getCurrentBatches();
       try {
         final response = await http.post(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/api/batch/create_batch.php",
-          ),
+          Uri.parse(AppUrls.urlCreateBatch),
           body: {
             "batch_name": event.batchName,
             "template_id": event.templateId,
@@ -112,9 +105,7 @@ class BatchBloc extends Bloc<BatchEvent, BatchState> {
 
       try {
         final response = await http.post(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/api/batch/update_batch.php",
-          ),
+          Uri.parse(AppUrls.urlUpdateBatch),
           body: {
             "batch_id": event.batchId,
             "batch_name": event.batchName,

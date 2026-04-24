@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
 import 'package:ql_do_an_tot_nghiep/main.dart';
 import 'dart:convert';
 
@@ -37,11 +38,7 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
   Future<void> _getTemplates() async {
     setState(() => _isFetchingTemplates = true);
     try {
-      final response = await http.get(
-        Uri.parse(
-          "http://192.168.1.109/ql_do_an_api/api/batch/get_templates.php",
-        ),
-      );
+      final response = await http.get(Uri.parse(AppUrls.urlGetTeamplate));
       final data = jsonDecode(response.body);
       if (data['status'] == 'success' && mounted) {
         setState(() => _templates = data['data']);

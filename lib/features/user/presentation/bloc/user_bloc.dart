@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
 import 'dart:convert';
 import 'user_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart';
@@ -14,9 +15,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<FetchUsersEvent>((event, emit) async {
       emit(UserLoading());
       try {
-        final response = await http.get(
-          Uri.parse("http://192.168.1.109/ql_do_an_api/admin/get_users.php"),
-        );
+        final response = await http.get(Uri.parse(AppUrls.urlFetchUsers));
         if (response.statusCode == 200) {
           final List data = json.decode(response.body);
           _allUsers = data.map((json) => UserDataModel.fromJson(json)).toList();
@@ -49,9 +48,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       try {
         // 1. Gửi ID chính xác lên Server (Lúc này ID đã có giá trị nhờ PHP Alias AS id)
         final response = await http.post(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/admin/reset_password.php",
-          ),
+          Uri.parse(AppUrls.urlResetpassword),
           body: {"id": event.userId},
         );
 

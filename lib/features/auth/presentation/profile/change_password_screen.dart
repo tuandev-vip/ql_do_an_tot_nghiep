@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
+
 class ChangePasswordScreen extends StatefulWidget {
   final int userId;
   const ChangePasswordScreen({super.key, required this.userId});
@@ -37,9 +39,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-          "http://192.168.1.109/ql_do_an_api/api/profile/change_password.php",
-        ),
+        Uri.parse(AppUrls.urlChangePassword),
         body: {
           "user_id": widget.userId.toString(),
           "old_password": oldPass,

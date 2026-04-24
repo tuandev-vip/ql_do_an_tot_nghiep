@@ -4,11 +4,23 @@ class AppUrls {
   static const String baseUrl = "http://192.168.1.109/ql_do_an_api";
 
   // --- Auth Endpoints ---
-  static const String login = "$baseUrl/auth/login.php";
-  static const String logout = "$baseUrl/auth/logout.php";
-  static const String changePassword = "$baseUrl/auth/change_password.php";
-  static const String resetPasswordRequest = "$baseUrl/auth/reset_request.php";
+  static const String urlLogin = "$baseUrl/auth/login.php";
+  static const String urlLogout = "$baseUrl/auth/logout.php";
+  static const String urlChangePassword = "$baseUrl/auth/change_password.php";
 
-  // --- Sau này thêm tới đâu, viết tới đó ---
-  // static const String getStudentProjects = "$baseUrl/projects/get_list.php";
+  // --- Batch Endpoints ---
+  static const String urlGetBatches = "$baseUrl/api/batch/get_batches.php";
+  static const String urlCloseBatch = "$baseUrl/api/batch/close_batch.php";
+  static const String urlCreateBatch = "$baseUrl/api/batch/create_batch.php";
+  static const String urlUpdateBatch = "$baseUrl/api/batch/update_batch.php";
+  static const String urlGetTeamplate = "$baseUrl/api/batch/get_templates.php";
+
+  //--- regostration ---
+  static const String urlFetchTeachers = "$baseUrl/student/get_teachers.php";
+  static const String urlSubmitRegistrationTeachers =
+      "$baseUrl/student/submit_registration.php";
+
+  //--- regostration ---
+  static const String urlFetchUsers = "$baseUrl/admin/get_users.php";
+  static const String urlResetpassword = "$baseUrl/admin/reset_password.php";
 }

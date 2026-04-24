@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
 import 'dart:convert';
 import 'registration_event.dart';
 import 'registration_state.dart';
@@ -16,7 +17,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       try {
         final response = await http.get(
           Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/student/get_teachers.php?student_id=${event.studentId}",
+            "${AppUrls.urlFetchTeachers}?student_id=${event.studentId}",
           ),
         );
         if (response.statusCode == 200) {
@@ -50,9 +51,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<SubmitRegistrationEvent>((event, emit) async {
       try {
         final response = await http.post(
-          Uri.parse(
-            "http://192.168.1.109/ql_do_an_api/student/submit_registration.php",
-          ),
+          Uri.parse(AppUrls.urlSubmitRegistrationTeachers),
           body: {
             'teacher_id': event.teacherId,
             'topic_direction': event.topicDirection,
