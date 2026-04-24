@@ -8,9 +8,6 @@ class ProfileScreen extends StatelessWidget {
 
   // Xử lý logic Đăng xuất
   void _handleLogout(BuildContext context) {
-    // In ra console để kiểm tra xem nút có hoạt động không
-    print("User ${user.fullName} is logging out...");
-
     // Đẩy về màn hình Login và xóa sạch lịch sử các trang trước đó
     // Lưu ý: Bạn phải định nghĩa '/login' trong routes của main.dart
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);

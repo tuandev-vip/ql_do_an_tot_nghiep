@@ -10,7 +10,7 @@ class AuthApi {
     try {
       // Gửi yêu cầu POST đến file login.php trên XAMPP
       final response = await client.post(
-        Uri.parse(AppUrls.login),
+        Uri.parse(AppUrls.urlLogin),
         body: {'username': username, 'password': password},
       );
 

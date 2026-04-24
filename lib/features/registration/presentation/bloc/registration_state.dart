@@ -27,3 +27,10 @@ class RegistrationError extends RegistrationState {
   final List<TeacherModel> teachers;
   RegistrationError(this.message, this.teachers);
 }
+
+// lấy trạng thái và hạn chót để testmode
+class RegistrationExpired extends RegistrationState {
+  final String batchName;
+  final String deadline;
+  RegistrationExpired(this.batchName, this.deadline);
+}

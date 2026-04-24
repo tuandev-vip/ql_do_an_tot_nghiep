@@ -115,7 +115,7 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: "Tên đợt đồ án",
+                labelText: "Nhập tên đợt...",
                 border: OutlineInputBorder(),
               ),
             ),
@@ -129,7 +129,7 @@ class _CreateBatchDialogState extends State<CreateBatchDialog> {
             ),
             const SizedBox(height: 10),
             Container(
-              height: 180,
+              height: 136,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(12),

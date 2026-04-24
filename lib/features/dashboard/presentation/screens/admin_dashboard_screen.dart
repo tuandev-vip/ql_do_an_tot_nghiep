@@ -14,6 +14,16 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F9),
+      appBar: AppBar(
+        title: Center(
+          child: Text(
+            "ICTU",
+
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+          ),
+        ),
+        backgroundColor: Colors.blueAccent,
+      ),
       // Dùng BlocListener để hiện thông báo khi reset mật khẩu thành công
       body: BlocListener<UserBloc, UserState>(
         listener: (context, state) {

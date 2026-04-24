@@ -46,22 +46,31 @@ class _TestModeCardState extends State<TestModeCard> {
           const SizedBox(height: 12),
 
           // DROPDOWN TỰ ĐỘNG ĐỔ 18+ MỐC TỪ BATCH
+          // --- DROPDOWN TỰ ĐỘNG ĐỔ MỐC TỪ BATCH ---
           if (widget.activeBatch != null)
             DropdownButtonFormField<String>(
               isExpanded: true,
-              decoration: const InputDecoration(labelText: "Chọn mốc cần test"),
-              initialValue: selectedMilestone,
+              // Giảm kích thước chữ để không bị tràn trên điện thoại
+              style: const TextStyle(fontSize: 13, color: Colors.black),
+              decoration: const InputDecoration(
+                labelText: "Chọn mốc cần test",
+                labelStyle: TextStyle(fontSize: 12), // Nhãn nhỏ hơn cho mobile
+              ),
+              initialValue:
+                  selectedMilestone, // Dùng value thay vì initialValue để đồng bộ
               items: widget.activeBatch!.deadlines.keys.map((String key) {
                 return DropdownMenuItem(
                   value: key,
-                  child: Text(key, style: const TextStyle(fontSize: 13)),
+                  child: Text(
+                    key,
+                    overflow: TextOverflow.ellipsis, // Tránh lỗi chữ quá dài
+                  ),
                 );
               }).toList(),
               onChanged: (val) {
                 if (val != null) {
                   setState(() {
                     selectedMilestone = val;
-                    // Lấy ngày của mốc đó và trừ đi 1 giờ để test trạng thái "Còn hạn"
                     String? dateStr = widget.activeBatch!.deadlines[val];
                     if (dateStr != null && dateStr.isNotEmpty) {
                       selectedDate = DateTime.parse(
@@ -71,6 +80,25 @@ class _TestModeCardState extends State<TestModeCard> {
                   });
                 }
               },
+            )
+          else
+            // HIỆN THÔNG BÁO KHI ĐANG TẢI HOẶC LỖI
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    "Đang tải dữ liệu đợt hoặc lỗi kết nối...",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
 
           ListTile(
