@@ -5,7 +5,6 @@ import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
 import '../widgets/teacher_card.dart';
 import '../../../user/data/models/teacher_model.dart';
-import '../widgets/registration_expired_view.dart';
 
 class AdvisorRegistrationScreen extends StatefulWidget {
   final String studentId;
@@ -77,34 +76,25 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
             _buildSearchField(context),
 
             // 2. DANH SÁCH GIẢNG VIÊN
-            // 2. DANH SÁCH GIẢNG VIÊN
             Expanded(
               child: BlocBuilder<RegistrationBloc, RegistrationState>(
                 builder: (context, state) {
-                  // SỬ DỤNG SWITCH-CASE: Vừa sạch, vừa dễ thêm 20 cái test mode sau này
-                  switch (state) {
-                    case RegistrationLoading _:
-                      return const Center(child: CircularProgressIndicator());
-
-                    case RegistrationExpired _:
-                      final expiredState = state;
-                      // Gọi đến Widget tách lẻ ông đã tạo
-                      return RegistrationExpiredView(
-                        batchName: expiredState.batchName,
-                        deadline: expiredState.deadline,
-                      );
-
-                    case TeachersLoaded _:
-                    case RegistrationSuccess _:
-                    case RegistrationError _:
-                      // Ép kiểu linh hoạt để lấy danh sách teachers mà không làm hỏng logic cũ
-                      final teachers =
-                          (state as dynamic).teachers as List<TeacherModel>;
-                      return _buildTeacherList(teachers);
-
-                    default:
-                      return const SizedBox.shrink();
+                  if (state is RegistrationLoading) {
+                    return const Center(child: CircularProgressIndicator());
                   }
+
+                  // Hứng dữ liệu từ tất cả các trạng thái có chứa list giảng viên
+                  if (state is TeachersLoaded) {
+                    return _buildTeacherList(state.teachers);
+                  }
+                  if (state is RegistrationSuccess) {
+                    return _buildTeacherList(state.teachers);
+                  }
+                  if (state is RegistrationError) {
+                    return _buildTeacherList(state.teachers);
+                  }
+
+                  return const SizedBox.shrink();
                 },
               ),
             ),

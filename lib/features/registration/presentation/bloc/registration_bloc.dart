@@ -138,5 +138,54 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         emit(RegistrationError("Lỗi hệ thống: $e", _allTeachers));
       }
     });
+
+    // 1. Logic lấy danh sách SV cho Giảng viên (2 Tab)
+    on<FetchAdvisorStudentsEvent>((event, emit) async {
+      emit(RegistrationLoading());
+      try {
+        final response = await http.get(
+          Uri.parse(
+            "${AppUrls.baseUrl}/api/teacher/get_pending_registrations.php?teacher_id=${event.teacherId}",
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          // Bảo vệ: Nếu PHP trả về lỗi HTML <br />, json.decode sẽ không làm sập app
+          final dynamic decodedData = json.decode(response.body);
+
+          if (decodedData is List) {
+            // Lọc ra SV chờ duyệt và SV đã duyệt ngay tại Bloc để UI nhàn hơn
+            final pending = decodedData
+                .where((s) => s['status'] == 'PENDING')
+                .toList();
+            final approved = decodedData
+                .where((s) => s['status'] == 'APPROVED')
+                .toList();
+            emit(AdvisorStudentsLoaded(pending, approved));
+          } else {
+            emit(RegistrationError("Dữ liệu không đúng định dạng", []));
+          }
+        }
+      } catch (e) {
+        emit(RegistrationError("Lỗi hệ thống: $e", []));
+      }
+    });
+
+    // 2. Logic cập nhật trạng thái Duyệt/Từ chối
+    on<UpdateStudentStatusEvent>((event, emit) async {
+      try {
+        final response = await http.post(
+          Uri.parse("${AppUrls.baseUrl}/api/teacher/approve_registration.php"),
+          body: json.encode({'reg_id': event.regId, 'status': event.status}),
+        );
+
+        if (response.statusCode == 200) {
+          // Sau khi duyệt xong, tự động gọi lại event load danh sách để UI tự nhảy Tab
+          add(FetchAdvisorStudentsEvent(event.teacherId));
+        }
+      } catch (e) {
+        print("Lỗi khi cập nhật trạng thái: $e");
+      }
+    });
   }
 }

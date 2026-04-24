@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.dart';
-import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
-import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
-import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
 // Thêm 3 dòng này Tuấn nhé
-import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_registration_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/data/models/user_data_model.dart'; // Đây là UserDataModel bên user
 
@@ -31,6 +25,14 @@ class MainWrapper extends StatefulWidget {
 
 class _MainWrapperState extends State<MainWrapper> {
   int _currentIndex = 0;
+  late List<_NavConfig> _navConfigs;
+
+  @override
+  void initState() {
+    super.initState();
+    // KHỞI TẠO DANH SÁCH SCREEN Ở ĐÂY (Chỉ chạy 1 lần)
+    _navConfigs = _buildNavigation();
+  }
 
   List<_NavConfig> _buildNavigation() {
     List<_NavConfig> configs = [];
@@ -166,38 +168,23 @@ class _MainWrapperState extends State<MainWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final List<_NavConfig> navConfigs = _buildNavigation();
-
     // Reset index nếu role thay đổi để tránh lỗi index out of bounds
-    if (_currentIndex >= navConfigs.length) {
-      _currentIndex = 0;
-    }
 
-    return MultiBlocProvider(
-      providers: [
-        // 1. Giữ nguyên BatchBloc
-        BlocProvider(create: (context) => BatchBloc()..add(LoadBatchesEvent())),
-        // 2. THÊM UserBloc vào đây
-        BlocProvider(create: (context) => UserBloc()..add(FetchUsersEvent())),
-        //dang ky GVHD
-        BlocProvider(create: (context) => RegistrationBloc()),
-      ],
-      child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: navConfigs.map((config) => config.screen).toList(),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF2196F3),
-          unselectedItemColor: Colors.grey[600],
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          showUnselectedLabels: true,
-          items: navConfigs.map((config) => config.item).toList(),
-        ),
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _navConfigs.map((config) => config.screen).toList(),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF2196F3),
+        unselectedItemColor: Colors.grey[600],
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        showUnselectedLabels: true,
+        items: _navConfigs.map((config) => config.item).toList(),
       ),
     );
   }
