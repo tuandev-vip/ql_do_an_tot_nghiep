@@ -104,31 +104,75 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
     );
   }
 
-  // Hàm vẽ danh sách giảng viên
   Widget _buildTeacherList(List<TeacherModel> teachers) {
-    // 1. Kiểm tra: Sinh viên đã đăng ký chưa? (Dù là vừa ấn xong hay dữ liệu từ DB)
+    // 1. Kiểm tra an toàn: Có thầy nào đã duyệt (APPROVED) cho mình chưa?
+    // Dùng trim() và toUpperCase() để tránh lỗi dữ liệu
+    final approvedTeacher = teachers.cast<TeacherModel?>().firstWhere(
+      (t) => t?.myRegistrationStatus?.trim().toUpperCase() == 'APPROVED',
+      orElse: () => null,
+    );
+
+    // 2. NẾU ĐÃ ĐƯỢC DUYỆT: Hiện màn hình chúc mừng, ẩn danh sách
+    if (approvedTeacher != null) {
+      return _buildAlreadyHasAdvisorView(approvedTeacher);
+    }
+
+    // 3. NẾU CHƯA ĐƯỢC DUYỆT: Kiểm tra xem có yêu cầu nào đang chờ (PENDING) không
     bool hasAnyRequest =
         registeredTeacherId != null ||
-        teachers.any((t) => t.myRegistrationStatus != null);
+        teachers.any(
+          (t) => t.myRegistrationStatus?.trim().toUpperCase() == 'PENDING',
+        );
 
     return ListView.builder(
       itemCount: teachers.length,
       padding: const EdgeInsets.only(bottom: 20),
       itemBuilder: (context, index) {
         final teacher = teachers[index];
+        String status =
+            teacher.myRegistrationStatus?.trim().toUpperCase() ?? "";
 
-        // 2. Kiểm tra: Đây có phải giảng viên được chọn không?
+        // Xám nút nếu là GV đã đăng ký (PENDING) hoặc đúng ID vừa nhấn
         bool isThisTeacher =
-            (teacher.id == registeredTeacherId) ||
-            (teacher.myRegistrationStatus != null);
+            (teacher.id == registeredTeacherId) || (status == 'PENDING');
 
         return TeacherCard(
           teacher: teacher,
           studentId: widget.studentId,
-          isThisTeacher: isThisTeacher, // Dùng biến logic vừa tạo
-          hasAnyRequest: hasAnyRequest, // Dùng biến logic vừa tạo
+          isThisTeacher: isThisTeacher,
+          hasAnyRequest: hasAnyRequest,
         );
       },
+    );
+  }
+
+  Widget _buildAlreadyHasAdvisorView(TeacherModel teacher) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, size: 80, color: Colors.green),
+            const SizedBox(height: 16),
+            const Text(
+              "BẠN ĐÃ CÓ GIẢNG VIÊN HƯỚNG DẪN",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "GV: ${teacher.fullName}",
+              style: const TextStyle(fontSize: 15),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Vui lòng chuyển sang Tab 'Báo cáo' để bắt đầu làm việc.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
