@@ -34,3 +34,9 @@ class RegistrationExpired extends RegistrationState {
   final String deadline;
   RegistrationExpired(this.batchName, this.deadline);
 }
+
+class AdvisorStudentsLoaded extends RegistrationState {
+  final List<dynamic> pendingStudents;
+  final List<dynamic> approvedStudents;
+  AdvisorStudentsLoaded(this.pendingStudents, this.approvedStudents);
+}

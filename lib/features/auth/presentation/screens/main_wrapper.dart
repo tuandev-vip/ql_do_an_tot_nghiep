@@ -4,6 +4,7 @@ import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
@@ -93,7 +94,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.fact_check_outlined),
             label: "Kiểm duyệt",
           ),
-          screen: _buildPlaceholderScreen("Phê duyệt đề tài"),
+          screen: AdvisorRequestsScreen(teacherId: widget.userData.id),
         ),
       );
       configs.add(
