@@ -18,11 +18,13 @@ class AppUrls {
       "$baseUrl/api/batch/check_registration_status.php";
 
   //--- regostration ---
-  static const String urlFetchTeachers = "$baseUrl/student/get_teachers.php";
+  static const String urlFetchTeachers =
+      "$baseUrl/api/student/get_teachers.php";
   static const String urlSubmitRegistrationTeachers =
-      "$baseUrl/student/submit_registration.php";
+      "$baseUrl/api/student/submit_registration.php";
 
   //--- regostration ---
-  static const String urlFetchUsers = "$baseUrl/admin/get_users.php";
-  static const String urlResetpassword = "$baseUrl/admin/reset_password.php";
+  static const String urlFetchUsers = "$baseUrl/api/admin/get_users.php";
+  static const String urlResetpassword =
+      "$baseUrl/api/admin/reset_password.php";
 }
