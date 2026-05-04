@@ -55,108 +55,134 @@ class _AutoAssignmentScreenState extends State<AutoAssignmentScreen> {
             );
           }
         },
-        child: Column(
-          children: [
-            // Thanh công cụ: Chọn bộ lọc và Nút phân công
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
+        // ĐƯA BLOCBUILDER RA NGOÀI CÙNG ĐỂ QUẢN LÝ TOÀN BỘ MÀN HÌNH
+        child: BlocBuilder<AutoAssignmentBloc, AutoAssignmentState>(
+          builder: (context, state) {
+            if (state is AutoAssignmentLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is AutoAssignmentLoaded) {
+              // 1. NẾU KHÔNG CÓ ĐỢT NÀO ĐANG MỞ (Danh sách rỗng ngay từ đầu)
+              // API PHP trả về [] khi is_closed = 1
+              if (state.students.isEmpty && _selectedFilter == "all") {
+                return _buildEmptyState();
+              }
+
+              // 2. NẾU CÓ ĐỢT ĐANG MỞ -> HIỂN THỊ GIAO DIỆN BÌNH THƯỜNG
+              return Column(
                 children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedFilter,
-                          isExpanded: true,
-                          items: const [
-                            DropdownMenuItem(
-                              value: "all",
-                              child: Text("Tất cả sinh viên"),
+                  // Thanh công cụ: Chọn bộ lọc và Nút phân công
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
                             ),
-                            DropdownMenuItem(
-                              value: "not_assigned",
-                              child: Text("Chưa có GVHD"),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedFilter,
+                                isExpanded: true,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: "all",
+                                    child: Text("Tất cả sinh viên"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "not_assigned",
+                                    child: Text("Chưa có GVHD"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "assigned",
+                                    child: Text("Đã có GVHD"),
+                                  ),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _selectedFilter = val!);
+                                  context.read<AutoAssignmentBloc>().add(
+                                    FetchAutoAssignmentStudents(
+                                      val!,
+                                      widget.deptId,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            DropdownMenuItem(
-                              value: "assigned",
-                              child: Text("Đã có GVHD"),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            setState(() => _selectedFilter = val!);
-                            context.read<AutoAssignmentBloc>().add(
-                              FetchAutoAssignmentStudents(val!, widget.deptId),
-                            );
-                          },
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () => context
+                              .read<AutoAssignmentBloc>()
+                              .add(TriggerAutoAssign(widget.deptId)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2196F3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            "Phân tự động",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => context.read<AutoAssignmentBloc>().add(
-                      TriggerAutoAssign(widget.deptId),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2196F3),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      "Phân tự động",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+
+                  // Danh sách hiển thị
+                  Expanded(
+                    child: state.students.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "Không có dữ liệu phù hợp",
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: state.students.length,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            itemBuilder: (context, index) => AutoAssignmentCard(
+                              student: state.students[index],
+                            ),
+                          ),
                   ),
                 ],
-              ),
-            ),
-
-            // Danh sách hiển thị
-            Expanded(
-              child: BlocBuilder<AutoAssignmentBloc, AutoAssignmentState>(
-                builder: (context, state) {
-                  if (state is AutoAssignmentLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is AutoAssignmentLoaded) {
-                    if (state.students.isEmpty) {
-                      return const Center(
-                        child: Text("Không có dữ liệu phù hợp"),
-                      );
-                    }
-                    return ListView.builder(
-                      itemCount: state.students.length,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      itemBuilder: (context, index) =>
-                          AutoAssignmentCard(student: state.students[index]),
-                    );
-                  }
-                  return const Center(child: Text("Vui lòng chọn bộ lọc"));
-                },
-              ),
-            ),
-          ],
+              );
+            }
+            // Trạng thái Error hoặc Initial
+            return const SizedBox.shrink();
+          },
         ),
       ),
+
+      // XỬ LÝ ẨN NÚT FLOATING NẾU KHÔNG CÓ ĐỢT
       floatingActionButton: BlocBuilder<AutoAssignmentBloc, AutoAssignmentState>(
         builder: (context, state) {
-          return FloatingActionButton.extended(
-            onPressed: () async {
-              if (state is AutoAssignmentLoaded) {
+          if (state is AutoAssignmentLoaded) {
+            // NẾU KHÔNG CÓ ĐỢT -> ẨN NÚT XUẤT EXCEL
+            if (state.students.isEmpty && _selectedFilter == 'all') {
+              return const SizedBox.shrink();
+            }
+
+            // NẾU CÓ ĐỢT -> HIỆN NÚT BÌNH THƯỜNG
+            return FloatingActionButton.extended(
+              onPressed: () async {
                 // 1. Kiểm tra phải đang ở Tab "Tất cả" mới cho xuất
                 if (_selectedFilter != 'all') {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -209,8 +235,7 @@ class _AutoAssignmentScreenState extends State<AutoAssignmentScreen> {
                 // 5. Gọi hàm từ file dùng chung
                 bool success = await ExcelHelper.exportToExcel(
                   fileName: 'Phan_Cong_GVHD_Bo_Mon_${widget.deptId}',
-                  deptId: widget
-                      .deptId, // Truyền deptId xuống đây để nhét vào dòng A1
+                  deptId: widget.deptId,
                   headers: headers,
                   dataRows: rows,
                 );
@@ -232,19 +257,58 @@ class _AutoAssignmentScreenState extends State<AutoAssignmentScreen> {
                     ),
                   );
                 }
-              }
-            },
-            label: const Text(
-              "Xuất file",
+              },
+              label: const Text(
+                "Xuất file",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              icon: const Icon(Icons.file_download, color: Colors.white),
+              backgroundColor: Colors.green.shade600,
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  // HÀM HIỂN THỊ GIAO DIỆN KHI KHÔNG CÓ ĐỢT ĐỒ ÁN NÀO ĐANG MỞ
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.folder_off_outlined,
+              size: 100,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "CHƯA CÓ ĐỢT ĐỒ ÁN",
               style: TextStyle(
-                color: Colors.white,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: Colors.black54,
               ),
             ),
-            icon: const Icon(Icons.file_download, color: Colors.white),
-            backgroundColor: Colors.green.shade600,
-          );
-        },
+            const SizedBox(height: 10),
+            Text(
+              "Hiện tại chưa có đợt đồ án nào đang mở.\nVui lòng quay lại sau!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
