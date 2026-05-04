@@ -46,66 +46,80 @@ class _AdvisorRequestsScreenState extends State<AdvisorRequestsScreen> {
           backgroundColor: const Color(0xFF2196F3),
           elevation: 0, // Bỏ đổ bóng để nối liền với phần Tab phía dưới
         ),
-        body: Column(
-          children: [
-            SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Container(
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2), // Nền Tab mờ
+        body: BlocListener<RegistrationBloc, RegistrationState>(
+          listener: (context, state) {
+            if (state is RegistrationError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message), // Thông báo lỗi từ PHP gửi về
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 3),
                 ),
-                child: TabBar(
-                  dividerColor: Colors.transparent,
-                  indicator: BoxDecoration(
-                    color: Colors.lightBlueAccent,
-                    borderRadius: BorderRadius.circular(10),
+              );
+            }
+          },
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Container(
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
                   ),
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.grey,
-                  labelStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                  child: TabBar(
+                    dividerColor: Colors.transparent,
+                    indicator: BoxDecoration(
+                      color: Colors.lightBlueAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.grey,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: const [
+                      Tab(text: "Danh sách SV"),
+                      Tab(text: "Duyệt sinh viên"),
+                    ],
                   ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  tabs: const [
-                    Tab(text: "Danh sách SV"),
-                    Tab(text: "Duyệt sinh viên"),
-                  ],
                 ),
               ),
-            ),
 
-            // 2. THANH TÌM KIẾM - NẰM DƯỚI TAB
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
-              child: _buildSearchField(),
-            ),
-
-            // 3. DANH SÁCH SINH VIÊN (Dùng Expanded để chiếm phần còn lại)
-            Expanded(
-              child: BlocBuilder<RegistrationBloc, RegistrationState>(
-                builder: (context, state) {
-                  if (state is RegistrationLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is AdvisorStudentsLoaded) {
-                    return TabBarView(
-                      children: [
-                        // TAB TRÁI: Sinh viên đang hướng dẫn (APPROVED)
-                        _buildList(state.approvedStudents, isPending: false),
-                        // TAB PHẢI: Sinh viên chờ duyệt (PENDING)
-                        _buildList(state.pendingStudents, isPending: true),
-                      ],
-                    );
-                  }
-                  return const Center(child: Text("Không có dữ liệu"));
-                },
+              // 2. THANH TÌM KIẾM - NẰM DƯỚI TAB
+              Padding(
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 16),
+                child: _buildSearchField(),
               ),
-            ),
-          ],
+
+              // 3. DANH SÁCH SINH VIÊN (Dùng Expanded để chiếm phần còn lại)
+              Expanded(
+                child: BlocBuilder<RegistrationBloc, RegistrationState>(
+                  builder: (context, state) {
+                    if (state is RegistrationLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state is AdvisorStudentsLoaded) {
+                      return TabBarView(
+                        children: [
+                          // TAB TRÁI: Sinh viên đang hướng dẫn (APPROVED)
+                          _buildList(state.approvedStudents, isPending: false),
+                          // TAB PHẢI: Sinh viên chờ duyệt (PENDING)
+                          _buildList(state.pendingStudents, isPending: true),
+                        ],
+                      );
+                    }
+                    return const Center(child: Text("Không có dữ liệu"));
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

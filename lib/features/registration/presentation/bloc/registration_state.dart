@@ -32,7 +32,8 @@ class RegistrationError extends RegistrationState {
 class RegistrationExpired extends RegistrationState {
   final String batchName;
   final String deadline;
-  RegistrationExpired(this.batchName, this.deadline);
+  final List<TeacherModel> teachers;
+  RegistrationExpired(this.batchName, this.deadline, this.teachers);
 }
 
 class AdvisorStudentsLoaded extends RegistrationState {

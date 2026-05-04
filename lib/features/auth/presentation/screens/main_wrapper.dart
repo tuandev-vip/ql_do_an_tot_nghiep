@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/bloc/auto_assignment_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screens/auto_assignment_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
@@ -111,13 +114,21 @@ class _MainWrapperState extends State<MainWrapper> {
     }
     // 4. LOGIC CHO TRƯỞNG BỘ MÔN (TBM)
     else if (widget.user.role == 'TBM') {
+      final String userDept = widget.user.deptId ?? "";
       configs.add(
         _NavConfig(
           item: const BottomNavigationBarItem(
             icon: Icon(Icons.person_add_alt_1_outlined),
             label: "Phân GV",
           ),
-          screen: _buildPlaceholderScreen("Phân Giảng viên hướng dẫn"),
+          screen: BlocProvider(
+            create: (context) => AutoAssignmentBloc(),
+            child: userDept.isNotEmpty
+                ? AutoAssignmentScreen(
+                    deptId: userDept,
+                  ) // Truyền động theo User đăng nhập
+                : const Center(child: Text("Tài khoản chưa được gán bộ môn!")),
+          ),
         ),
       );
       configs.add(

@@ -16,14 +16,41 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<FetchTeachersEvent>((event, emit) async {
       emit(RegistrationLoading());
       try {
-        // 1. Lấy thời gian giả từ TimeManager để test mode
-        String logicalNow = TimeManager.now().toIso8601String();
+        // --- BƯỚC 1: LUÔN TẢI DANH SÁCH GIẢNG VIÊN TRƯỚC ---
+        final response = await http.get(
+          Uri.parse(
+            "${AppUrls.urlFetchTeachers}?student_id=${event.studentId}",
+          ),
+        );
+        print("Dữ liệu Server trả về: ${response.body}");
 
-        // 2. Kiểm tra trạng thái thời hạn trước
+        if (response.statusCode == 200) {
+          final dynamic decodedData = json.decode(response.body);
+          if (decodedData is Map && decodedData['status'] == 'error') {
+            emit(RegistrationError(decodedData['message'], []));
+            return;
+          }
+          if (decodedData is List) {
+            // Lưu dữ liệu vào biến toàn cục của Bloc
+            _allTeachers = decodedData
+                .map((j) => TeacherModel.fromJson(j))
+                .toList();
+          } else {
+            emit(RegistrationError("Dữ liệu không hợp lệ", []));
+            return;
+          }
+        } else {
+          emit(RegistrationError("Lỗi Server: ${response.statusCode}", []));
+          return;
+        }
+
+        // --- BƯỚC 2: KIỂM TRA TRẠNG THÁI THỜI HẠN SAU ---
+        String logicalNow = TimeManager.now().toIso8601String();
         final statusRes = await http.get(
           Uri.parse("${AppUrls.urlCheckRegStatus}?fake_date=$logicalNow"),
         );
         print("Check Status Response: ${statusRes.body}");
+
         if (statusRes.statusCode == 200) {
           final statusData = json.decode(statusRes.body);
 
@@ -32,56 +59,30 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             emit(
               RegistrationError(
                 statusData['message'] ?? "Không có đợt nào đang mở",
-                [],
+                _allTeachers,
               ),
             );
             return;
           }
 
+          // NẾU HẾT HẠN: Bắn ra trạng thái Expired KÈM THEO DANH SÁCH _allTeachers
           if (statusData['is_expired'] == true) {
             emit(
               RegistrationExpired(
-                statusData['batch_name'],
-                statusData['deadline_date'],
+                statusData['batch_name'] ?? "Đợt đồ án hiện tại",
+                statusData['deadline_date'] ?? "Chưa xác định",
+                _allTeachers, // <-- Nhờ có cái này, UI mới check được ai đã APPROVED
               ),
             );
             return;
           }
         }
 
-        // 3. Nếu còn hạn: Tải danh sách giảng viên
-        final response = await http.get(
-          Uri.parse(
-            "${AppUrls.urlFetchTeachers}?student_id=${event.studentId}",
-          ),
-        );
-        print("Dữ liệu Server trả về: ${response.body}");
-        if (response.statusCode == 200) {
-          // Dùng dynamic để hứng dữ liệu vì chưa biết là List hay Map
-          final dynamic decodedData = json.decode(response.body);
-
-          // TRƯỜNG HỢP 1: Server trả về lỗi (Map)
-          if (decodedData is Map && decodedData['status'] == 'error') {
-            emit(RegistrationError(decodedData['message'], []));
-            return;
-          }
-
-          // TRƯỜNG HỢP 2: Server trả về danh sách (List)
-          if (decodedData is List) {
-            _allTeachers = decodedData
-                .map((j) => TeacherModel.fromJson(j))
-                .toList();
-            emit(TeachersLoaded(_allTeachers));
-          } else {
-            emit(RegistrationError("Dữ liệu không hợp lệ", []));
-          }
-        } else {
-          emit(RegistrationError("Lỗi Server: ${response.statusCode}", []));
-        }
+        // --- BƯỚC 3: NẾU CÒN HẠN VÀ KHÔNG LỖI -> HIỂN THỊ BÌNH THƯỜNG ---
+        emit(TeachersLoaded(_allTeachers));
       } catch (e) {
-        // In lỗi ra console để ông dễ debug
         print("Lỗi RegistrationBloc: $e");
-        emit(RegistrationError("Lỗi kết nối hệ thống!", []));
+        emit(RegistrationError("Lỗi kết nối hệ thống!", _allTeachers));
       }
     });
     // 2. Xử lý tìm kiếm
@@ -176,15 +177,40 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       try {
         final response = await http.post(
           Uri.parse("${AppUrls.baseUrl}/api/teacher/approve_registration.php"),
-          body: json.encode({'reg_id': event.regId, 'status': event.status}),
+          // Đảm bảo ép kiểu dữ liệu gửi lên là JSON
+          headers: {"Content-Type": "application/json"},
+          body: json.encode({
+            'reg_id': event.regId,
+            'status': event.status,
+            'teacher_id':
+                event.teacherId, // Truyền thêm để load lại data nếu cần
+          }),
         );
 
         if (response.statusCode == 200) {
-          // Sau khi duyệt xong, tự động gọi lại event load danh sách để UI tự nhảy Tab
-          add(FetchAdvisorStudentsEvent(event.teacherId));
+          final resData = json.decode(response.body);
+
+          // KIỂM TRA TRẠNG THÁI TRONG JSON TRẢ VỀ
+          if (resData['status'] == 'success') {
+            // Nếu thành công: Load lại danh sách để cập nhật UI
+            add(FetchAdvisorStudentsEvent(event.teacherId));
+          } else {
+            // NẾU LỖI (Ví dụ: Đã đủ 2/2): Bắn ra trạng thái Error để UI hiện SnackBar
+            emit(
+              RegistrationError(resData['message'] ?? "Không thể cập nhật", []),
+            );
+
+            //Load lại danh sách cũ sau khi cập nhật ui
+            add(FetchAdvisorStudentsEvent(event.teacherId));
+          }
+        } else {
+          emit(
+            RegistrationError("Lỗi kết nối Server: ${response.statusCode}", []),
+          );
         }
       } catch (e) {
         print("Lỗi khi cập nhật trạng thái: $e");
+        emit(RegistrationError("Lỗi hệ thống: $e", []));
       }
     });
   }

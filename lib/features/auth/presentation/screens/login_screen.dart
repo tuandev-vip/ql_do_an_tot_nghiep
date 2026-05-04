@@ -115,13 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text("ĐĂNG NHẬP", style: TextStyle(fontSize: 16)),
                 ),
-
-                TextButton(
-                  onPressed: () {
-                    // Logic Quên mật khẩu sẽ làm sau
-                  },
-                  child: const Text("Quên mật khẩu?"),
-                ),
               ],
             ),
           );

@@ -5,6 +5,8 @@ import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
 import '../widgets/teacher_card.dart';
 import '../../../user/data/models/teacher_model.dart';
+// ĐỪNG QUÊN IMPORT MÀN HÌNH NÀY NẾU NÓ BÁO ĐỎ NHÉ
+import '../widgets/registration_expired_view.dart';
 
 class AdvisorRegistrationScreen extends StatefulWidget {
   final String studentId;
@@ -16,13 +18,11 @@ class AdvisorRegistrationScreen extends StatefulWidget {
 }
 
 class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
-  // Biến dùng để khóa giao diện (xám nút) khi sinh viên đã gửi yêu cầu thành công
   String? registeredTeacherId;
 
   @override
   void initState() {
     super.initState();
-    // Vừa vào màn hình là gọi lấy danh sách giảng viên ngay
     context.read<RegistrationBloc>().add(FetchTeachersEvent(widget.studentId));
   }
 
@@ -41,7 +41,6 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
       body: BlocListener<RegistrationBloc, RegistrationState>(
         listener: (context, state) {
           if (state is RegistrationSuccess) {
-            // 1. Hiện SnackBar xanh báo thành công
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -49,18 +48,13 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
                 behavior: SnackBarBehavior.floating,
               ),
             );
-
-            // 2. Cập nhật biến trạng thái để UI xám nút ngay lập tức
             setState(() {
               registeredTeacherId = state.teacherId;
             });
-
-            // 3. Tải lại danh sách để cập nhật số lượng sinh viên (ví dụ 0/8 lên 1/8)
             context.read<RegistrationBloc>().add(
               FetchTeachersEvent(widget.studentId),
             );
           } else if (state is RegistrationError) {
-            // Hiện SnackBar đỏ báo lỗi
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -70,54 +64,59 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
             );
           }
         },
-        child: Column(
-          children: [
-            // 1. THANH TÌM KIẾM
-            _buildSearchField(context),
+        child: BlocBuilder<RegistrationBloc, RegistrationState>(
+          builder: (context, state) {
+            if (state is RegistrationLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            // 2. DANH SÁCH GIẢNG VIÊN
-            Expanded(
-              child: BlocBuilder<RegistrationBloc, RegistrationState>(
-                builder: (context, state) {
-                  if (state is RegistrationLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+            // 1. HỨNG DỮ LIỆU TỪ TẤT CẢ CÁC TRẠNG THÁI (KỂ CẢ EXPIRED)
+            List<TeacherModel> teachers = [];
+            if (state is TeachersLoaded) {
+              teachers = state.teachers;
+            } else if (state is RegistrationSuccess) {
+              teachers = state.teachers;
+            } else if (state is RegistrationError) {
+              teachers = state.teachers;
+            } else if (state is RegistrationExpired) {
+              teachers = state
+                  .teachers; // <--- ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT ÔNG BỊ THIẾU NÈ!
+            }
 
-                  // Hứng dữ liệu từ tất cả các trạng thái có chứa list giảng viên
-                  if (state is TeachersLoaded) {
-                    return _buildTeacherList(state.teachers);
-                  }
-                  if (state is RegistrationSuccess) {
-                    return _buildTeacherList(state.teachers);
-                  }
-                  if (state is RegistrationError) {
-                    return _buildTeacherList(state.teachers);
-                  }
+            // 2. KIỂM TRA ƯU TIÊN TUYỆT ĐỐI: Có thầy nào đã duyệt (APPROVED) chưa?
+            final approvedTeacher = teachers.cast<TeacherModel?>().firstWhere(
+              (t) =>
+                  t?.myRegistrationStatus?.trim().toUpperCase() == 'APPROVED',
+              orElse: () => null,
+            );
 
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ],
+            // 3. NẾU ĐÃ ĐƯỢC DUYỆT: Kệ quá hạn hay không, cứ trùm full màn hình tick xanh!
+            if (approvedTeacher != null) {
+              return _buildAlreadyHasAdvisorView(approvedTeacher);
+            }
+
+            // 4. NẾU CHƯA CÓ GVHD MÀ LẠI BỊ QUÁ HẠN: Hiện cái đồng hồ đỏ
+            if (state is RegistrationExpired) {
+              return RegistrationExpiredView(
+                batchName: state.batchName,
+                deadline: state.deadline,
+              );
+            }
+
+            // 5. NẾU VẪN CÒN HẠN VÀ CHƯA CÓ GVHD: Hiện thanh tìm kiếm bình thường
+            return Column(
+              children: [
+                _buildSearchField(context),
+                Expanded(child: _buildTeacherList(teachers)),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   Widget _buildTeacherList(List<TeacherModel> teachers) {
-    // 1. Kiểm tra an toàn: Có thầy nào đã duyệt (APPROVED) cho mình chưa?
-    // Dùng trim() và toUpperCase() để tránh lỗi dữ liệu
-    final approvedTeacher = teachers.cast<TeacherModel?>().firstWhere(
-      (t) => t?.myRegistrationStatus?.trim().toUpperCase() == 'APPROVED',
-      orElse: () => null,
-    );
-
-    // 2. NẾU ĐÃ ĐƯỢC DUYỆT: Hiện màn hình chúc mừng, ẩn danh sách
-    if (approvedTeacher != null) {
-      return _buildAlreadyHasAdvisorView(approvedTeacher);
-    }
-
-    // 3. NẾU CHƯA ĐƯỢC DUYỆT: Kiểm tra xem có yêu cầu nào đang chờ (PENDING) không
     bool hasAnyRequest =
         registeredTeacherId != null ||
         teachers.any(
@@ -131,8 +130,6 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
         final teacher = teachers[index];
         String status =
             teacher.myRegistrationStatus?.trim().toUpperCase() ?? "";
-
-        // Xám nút nếu là GV đã đăng ký (PENDING) hoặc đúng ID vừa nhấn
         bool isThisTeacher =
             (teacher.id == registeredTeacherId) || (status == 'PENDING');
 
@@ -176,7 +173,6 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
     );
   }
 
-  // Widget thanh tìm kiếm
   Widget _buildSearchField(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),

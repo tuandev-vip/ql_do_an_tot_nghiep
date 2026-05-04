@@ -8,7 +8,8 @@ class UserModel {
   final String email;
   final String phone;
   final String? className; // Chỉ SV mới có
-  final String? position; // Chỉ GV mới có
+  final String? position;
+  final String? deptId; // Chỉ GV mới có
 
   UserModel({
     required this.userId,
@@ -21,6 +22,7 @@ class UserModel {
     required this.phone,
     this.className,
     this.position,
+    this.deptId,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class UserModel {
       phone: json['phone'] ?? '',
       className: json['class_name'],
       position: json['position'],
+      deptId: json['dept_id']?.toString(),
     );
   }
 }
