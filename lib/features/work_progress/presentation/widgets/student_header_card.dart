@@ -7,6 +7,10 @@ class StudentHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Lấy dữ liệu đề tài, kiểm tra xem có bị null hay rỗng không
+    String topic = student['topic']?.toString().trim() ?? "";
+    bool hasTopic = topic.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -62,10 +66,17 @@ class StudentHeaderCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1),
           ),
+
+          // 2. LOGIC HIỂN THỊ ĐỀ TÀI CHUẨN Ở ĐÂY NÈ
           Text(
-            student['topic'] ??
-                "Hệ thống Quản lý Học tập Thông minh (Smart LMS)",
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            hasTopic ? topic : "Chưa có",
+            style: TextStyle(
+              fontSize: 14,
+              color: hasTopic ? Colors.black87 : Colors.grey.shade600,
+              fontStyle: hasTopic
+                  ? FontStyle.normal
+                  : FontStyle.italic, // Chưa có thì in nghiêng
+            ),
           ),
         ],
       ),

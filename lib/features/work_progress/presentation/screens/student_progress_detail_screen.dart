@@ -14,7 +14,7 @@ class StudentProgressDetailScreen extends StatefulWidget {
 
 class _StudentProgressDetailScreenState
     extends State<StudentProgressDetailScreen> {
-  int selectedTab = 1; // 0: Duyệt tiến độ, 1: Đề cương
+  int selectedTab = 0; // 0: Duyệt tiến độ, 1: Đề cương
 
   @override
   Widget build(BuildContext context) {

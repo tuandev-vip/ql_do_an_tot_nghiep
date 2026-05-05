@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/student_progress_detail_screen.dart';
 
 class EvaluationStudentCard extends StatelessWidget {
   final Map<String, dynamic> student;
@@ -56,19 +57,24 @@ class EvaluationStudentCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Nút Xem tiến độ
+                // Nút Xem tiến độ
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Xử lý chuyển sang màn hình chi tiết tiến độ
-                      print(
-                        "Chuyển sang chi tiết của: ${student['student_name']}",
+                      // CHỈ SỬA ĐÚNG ĐOẠN NÀY: Lệnh chuyển màn hình
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StudentProgressDetailScreen(
+                            student:
+                                student, // Truyền nguyên cục data của ông SV này sang màn hình kia
+                          ),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(
-                        0xFF4CAF50,
-                      ), // Màu xanh lá chuẩn
+                      backgroundColor: const Color(0xFF4CAF50),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
