@@ -10,7 +10,12 @@ import '../bloc/project_outline_state.dart';
 
 class OutlineTabContent extends StatefulWidget {
   final String studentId;
-  const OutlineTabContent({super.key, required this.studentId});
+  final Function(String)? onTopicUpdated;
+  const OutlineTabContent({
+    super.key,
+    required this.studentId,
+    this.onTopicUpdated,
+  });
 
   @override
   State<OutlineTabContent> createState() => _OutlineTabContentState();
@@ -86,6 +91,9 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
 
           _directionController.text = state.outline.topicDirection;
           _topicNameController.text = state.outline.topicName;
+          if (widget.onTopicUpdated != null) {
+            widget.onTopicUpdated!(state.outline.topicName);
+          }
         }
         // Bắt trạng thái Thành công
         else if (state is OutlineUpdateSuccess) {

@@ -57,6 +57,13 @@ class _StudentProgressDetailScreenState
                   create: (context) => ProjectOutlineBloc(),
                   child: OutlineTabContent(
                     studentId: widget.student['student_id'],
+                    onTopicUpdated: (newTopicName) {
+                      // Cập nhật lại Map dữ liệu của sinh viên hiện tại
+                      // Lệnh setState sẽ ép cái HeaderCard phải vẽ lại ngay lập tức
+                      setState(() {
+                        widget.student['topic'] = newTopicName;
+                      });
+                    },
                   ), // Truyền ID sinh viên vào đây
                 ), // Gọi Content của Tab Đề cương từ file khác
             ],
