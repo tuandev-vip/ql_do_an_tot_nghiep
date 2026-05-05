@@ -5,6 +5,8 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screen
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_evaluation_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/screens/project_evaluation_screen.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
 // Thêm 3 dòng này Tuấn nhé
@@ -106,9 +108,21 @@ class _MainWrapperState extends State<MainWrapper> {
         _NavConfig(
           item: const BottomNavigationBarItem(
             icon: Icon(Icons.folder_shared_outlined),
-            label: "Duyệt báo cáo",
+            label: "QL đồ án",
           ),
-          screen: _buildPlaceholderScreen("Chấm báo cáo tuần"),
+          screen: BlocProvider(
+            create: (context) => ProjectEvaluationBloc(),
+            child: ProjectEvaluationScreen(teacherId: widget.userData.id),
+          ),
+        ),
+      );
+      configs.add(
+        _NavConfig(
+          item: const BottomNavigationBarItem(
+            icon: Icon(Icons.folder_shared_outlined),
+            label: "Hội đồng",
+          ),
+          screen: _buildPlaceholderScreen("Hội đồng"),
         ),
       );
     }

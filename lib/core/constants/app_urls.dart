@@ -27,4 +27,8 @@ class AppUrls {
   static const String urlFetchUsers = "$baseUrl/api/admin/get_users.php";
   static const String urlResetpassword =
       "$baseUrl/api/admin/reset_password.php";
+
+  //project_evaluation
+  static const String urlgetListStudentTrain =
+      "$baseUrl/api/teacher/get_evaluation_students.php";
 }
