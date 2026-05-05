@@ -31,4 +31,10 @@ class AppUrls {
   //project_evaluation
   static const String urlgetListStudentTrain =
       "$baseUrl/api/teacher/get_evaluation_students.php";
+
+  static const String urlGetProjectOutline =
+      "$baseUrl/api/teacher/get_project_outline.php";
+
+  static const String urlUpdateProjectOutline =
+      "$baseUrl/api/teacher/update_project_outline.php";
 }

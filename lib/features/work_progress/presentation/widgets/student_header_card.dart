@@ -29,13 +29,8 @@ class StudentHeaderCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.blueAccent, width: 1.5),
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-                    ),
-                    fit: BoxFit.cover,
-                  ),
                 ),
+                child: Icon(Icons.person, size: 40, color: Colors.grey),
               ),
               const SizedBox(width: 16),
               Expanded(

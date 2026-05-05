@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_bloc.dart';
 import '../widgets/student_header_card.dart';
 import '../widgets/outline_tab_content.dart';
 
@@ -51,7 +53,12 @@ class _StudentProgressDetailScreenState
               if (selectedTab == 0)
                 const Center(child: Text("Giao diện Duyệt tiến độ (Làm sau)"))
               else
-                const OutlineTabContent(), // Gọi Content của Tab Đề cương từ file khác
+                BlocProvider(
+                  create: (context) => ProjectOutlineBloc(),
+                  child: OutlineTabContent(
+                    studentId: widget.student['student_id'],
+                  ), // Truyền ID sinh viên vào đây
+                ), // Gọi Content của Tab Đề cương từ file khác
             ],
           ),
         ),
