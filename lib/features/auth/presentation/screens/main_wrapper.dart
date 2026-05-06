@@ -5,6 +5,7 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screen
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/student_progress/presentation/screens/student_progress_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_evaluation_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/screens/project_evaluation_screen.dart';
 import '../../data/models/user_model.dart';
@@ -89,7 +90,7 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.description_outlined),
             label: "Báo cáo",
           ),
-          screen: _buildPlaceholderScreen("Nộp báo cáo tuần"),
+          screen: StudentProgressScreen(studentId: widget.userData.id),
         ),
       );
     }

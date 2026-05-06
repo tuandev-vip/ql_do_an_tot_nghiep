@@ -30,6 +30,7 @@ class _ProjectEvaluationScreenState extends State<ProjectEvaluationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           "QUẢN LÝ ĐÁNH GIÁ ĐỒ ÁN",
           style: TextStyle(
