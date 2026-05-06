@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart'
-    show kIsWeb; // Quan trọng để nhận diện nền tảng
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../bloc/project_outline_bloc.dart';
 import '../bloc/project_outline_event.dart';
 import '../bloc/project_outline_state.dart';
+// TODO: ÔNG NHỚ KIỂM TRA LẠI ĐƯỜNG DẪN FILE NÀY CHO KHỚP VỚI PROJECT NHÉ
+import '../../../../core/untils/time_manager.dart';
 
 class OutlineTabContent extends StatefulWidget {
   final String studentId;
@@ -23,14 +24,15 @@ class OutlineTabContent extends StatefulWidget {
 
 class _OutlineTabContentState extends State<OutlineTabContent> {
   bool isEditing = false;
+  bool isOverdue = false; // BIẾN LƯU TRẠNG THÁI QUÁ HẠN
+
   String? direction;
   String? topicName;
-  String? fileName; // Tên file từ database trả về
+  String? fileName;
 
-  // Biến lưu trữ file vừa chọn từ thiết bị
-  String? selectedFilePath; // Dùng cho Android
-  List<int>? selectedFileBytes; // Dùng cho Web
-  String? selectedFileName; // Dùng chung
+  String? selectedFilePath;
+  List<int>? selectedFileBytes;
+  String? selectedFileName;
 
   final TextEditingController _directionController = TextEditingController();
   final TextEditingController _topicNameController = TextEditingController();
@@ -38,7 +40,6 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
   @override
   void initState() {
     super.initState();
-    // Vừa vào Tab là gọi API lấy dữ liệu liền
     context.read<ProjectOutlineBloc>().add(
       FetchProjectOutline(widget.studentId),
     );
@@ -51,20 +52,16 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
     super.dispose();
   }
 
-  // HÀM MỞ FILE PICKER (Phiên bản Lai - Hybrid)
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx'],
-      withData:
-          kIsWeb, // TỰ ĐỘNG: Web thì lấy Data Byte, Android thì bỏ qua để tránh tràn RAM
+      withData: kIsWeb,
     );
 
     if (result != null) {
       setState(() {
         selectedFileName = result.files.single.name;
-
-        // TỰ ĐỘNG CHIA NHÁNH LƯU DỮ LIỆU FILE
         if (kIsWeb) {
           selectedFileBytes = result.files.single.bytes;
         } else {
@@ -79,24 +76,38 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
     return BlocConsumer<ProjectOutlineBloc, ProjectOutlineState>(
       listener: (context, state) {
         if (state is OutlineLoaded) {
-          direction = state.outline.topicDirection.isNotEmpty
-              ? state.outline.topicDirection
-              : null;
-          topicName = state.outline.topicName.isNotEmpty
-              ? state.outline.topicName
-              : null;
-          fileName = state.outline.outlineUrl.isNotEmpty
-              ? state.outline.outlineUrl
-              : null;
+          // GOM HẾT VÀO SETSTATE ĐỂ GIAO DIỆN VẼ LẠI
+          setState(() {
+            direction = state.outline.topicDirection.isNotEmpty
+                ? state.outline.topicDirection
+                : null;
+            topicName = state.outline.topicName.isNotEmpty
+                ? state.outline.topicName
+                : null;
+            fileName = state.outline.outlineUrl.isNotEmpty
+                ? state.outline.outlineUrl
+                : null;
 
-          _directionController.text = state.outline.topicDirection;
-          _topicNameController.text = state.outline.topicName;
+            _directionController.text = state.outline.topicDirection;
+            _topicNameController.text = state.outline.topicName;
+
+            // DÙNG TIMEMANAGER KIỂM TRA QUÁ HẠN
+            if (state.outline.deadline != null &&
+                state.outline.deadline!.isNotEmpty) {
+              String safeDate = state.outline.deadline!.replaceAll(" ", "T");
+              DateTime deadlineDate = DateTime.parse(safeDate);
+
+              // Tích hợp TimeManager thần thánh của ông vào đây
+              isOverdue = TimeManager.now().isAfter(deadlineDate);
+            } else {
+              isOverdue = false;
+            }
+          });
+
           if (widget.onTopicUpdated != null) {
             widget.onTopicUpdated!(state.outline.topicName);
           }
-        }
-        // Bắt trạng thái Thành công
-        else if (state is OutlineUpdateSuccess) {
+        } else if (state is OutlineUpdateSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -106,20 +117,16 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
               backgroundColor: Colors.green,
             ),
           );
-          // Thoát chế độ sửa và dọn dẹp file tạm
           setState(() {
             isEditing = false;
             selectedFilePath = null;
             selectedFileBytes = null;
             selectedFileName = null;
           });
-          // Tải lại dữ liệu mới nhất
           context.read<ProjectOutlineBloc>().add(
             FetchProjectOutline(widget.studentId),
           );
-        }
-        // Bắt trạng thái Thất bại
-        else if (state is OutlineUpdateFailure) {
+        } else if (state is OutlineUpdateFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -169,7 +176,7 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
                 ),
                 const SizedBox(height: 8),
                 InkWell(
-                  onTap: _pickFile, // Gọi hàm chọn file
+                  onTap: _pickFile,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -260,39 +267,60 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
               ],
               const SizedBox(height: 24),
 
+              // DÒNG TEXT CẢNH BÁO MÀU ĐỎ KHI HẾT HẠN
+              if (isOverdue)
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      "⏳ Đã hết hạn cập nhật đề cương!",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
               // NÚT CHUYỂN ĐỔI: SỬA HOẶC LƯU
               Align(
                 alignment: Alignment.centerRight,
                 child: state is OutlineUpdating
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: () {
-                          if (isEditing) {
-                            // BẤM LƯU: Gửi cả 2 biến, BLoC sẽ tự biết lấy cái nào
-                            context.read<ProjectOutlineBloc>().add(
-                              UpdateProjectOutline(
-                                studentId: widget.studentId,
-                                topicDirection: _directionController.text,
-                                topicName: _topicNameController.text,
-                                filePath: selectedFilePath, // Biến của Android
-                                fileBytes: selectedFileBytes, // Biến của Web
-                                fileName: selectedFileName,
-                              ),
-                            );
-                          } else {
-                            // BẤM CẬP NHẬT: Mở chế độ chỉnh sửa
-                            setState(() {
-                              _directionController.text = direction ?? "";
-                              _topicNameController.text = topicName ?? "";
-                              selectedFilePath = null;
-                              selectedFileBytes = null;
-                              selectedFileName = null;
-                              isEditing = true;
-                            });
-                          }
-                        },
+                        // NẾU QUÁ HẠN -> KHÓA NÚT (TRẢ VỀ NULL)
+                        onPressed: isOverdue
+                            ? null
+                            : () {
+                                if (isEditing) {
+                                  context.read<ProjectOutlineBloc>().add(
+                                    UpdateProjectOutline(
+                                      studentId: widget.studentId,
+                                      topicDirection: _directionController.text,
+                                      topicName: _topicNameController.text,
+                                      filePath: selectedFilePath,
+                                      fileBytes: selectedFileBytes,
+                                      fileName: selectedFileName,
+                                    ),
+                                  );
+                                } else {
+                                  setState(() {
+                                    _directionController.text = direction ?? "";
+                                    _topicNameController.text = topicName ?? "";
+                                    selectedFilePath = null;
+                                    selectedFileBytes = null;
+                                    selectedFileName = null;
+                                    isEditing = true;
+                                  });
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2962FF),
+                          // ĐỔI MÀU NỀN THEO TRẠNG THÁI KHÓA/MỞ
+                          backgroundColor: isOverdue
+                              ? Colors.grey.shade400
+                              : const Color(0xFF2962FF),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -300,11 +328,15 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
                             horizontal: 24,
                             vertical: 12,
                           ),
+                          disabledBackgroundColor: Colors.grey.shade300,
                         ),
                         child: Text(
                           isEditing ? "Lưu" : "Cập nhật",
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            // ĐỔI MÀU CHỮ
+                            color: isOverdue
+                                ? Colors.grey.shade600
+                                : Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
