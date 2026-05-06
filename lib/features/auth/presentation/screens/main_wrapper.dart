@@ -90,7 +90,10 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.description_outlined),
             label: "Báo cáo",
           ),
-          screen: StudentProgressScreen(studentId: widget.userData.id),
+          screen: StudentProgressScreen(
+            studentId: widget.userData.id,
+            studentName: widget.user.fullName,
+          ),
         ),
       );
     }

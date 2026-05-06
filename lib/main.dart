@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/core/untils/service_locator.dart';
 import 'package:ql_do_an_tot_nghiep/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/auth/presentation/screens/login_screen.dart';
-
-// THÊM CÁC DÒNG IMPORT NÀY ĐỂ HẾT LỖI "isn't defined"
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';

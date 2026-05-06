@@ -37,4 +37,10 @@ class AppUrls {
 
   static const String urlUpdateProjectOutline =
       "$baseUrl/api/teacher/update_project_outline.php";
+  // report_weeks
+  static const String getStudentReports =
+      '$baseUrl/api/student/get_student_reports.php';
+  // submit_report
+  static const String submitReport =
+      '$baseUrl/api/student/submit_weekly_report.php';
 }

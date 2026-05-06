@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart'; // Để mở link DOCX
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_event.dart';
+import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/app_urls.dart';
-import '../../../work_progress/presentation/bloc/project_outline_bloc.dart';
-import '../../../work_progress/presentation/bloc/project_outline_event.dart';
-import '../../../work_progress/presentation/bloc/project_outline_state.dart';
+// Import file cấu hình URL của ông
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart';
 
 class StudentOutlineTab extends StatefulWidget {
   final String studentId;
-
   const StudentOutlineTab({super.key, required this.studentId});
 
   @override
@@ -20,78 +20,43 @@ class _StudentOutlineTabState extends State<StudentOutlineTab> {
   @override
   void initState() {
     super.initState();
-    // Vẫn mượn tạm BLoC của GVHD để xài vì chung API lấy dữ liệu
+    // Vừa mở Tab lên là gọi lấy dữ liệu Đề Cương từ Server[cite: 4]
     context.read<ProjectOutlineBloc>().add(
       FetchProjectOutline(widget.studentId),
     );
-  }
-
-  // HÀM XỬ LÝ CLICK FILE SIÊU TRÍ TUỆ NẰM Ở ĐÂY
-  Future<void> _handleOpenFile(String fileUrl) async {
-    // Ghép link hoàn chỉnh từ server
-    String fullUrl = "${AppUrls.baseUrl}/$fileUrl";
-    final Uri url = Uri.parse(fullUrl);
-
-    try {
-      // DÙNG LỰC ÉP MỞ LUÔN, KHÔNG THÈM CHECK canLaunchUrl NỮA
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      // NẾU LỖI THÌ BÁO RA MÀN HÌNH
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Không thể mở file! Vui lòng cài đặt trình duyệt hoặc app đọc PDF.",
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProjectOutlineBloc, ProjectOutlineState>(
       builder: (context, state) {
-        if (state is OutlineLoading) {
+        // Trạng thái đang tải[cite: 9]
+        if (state is OutlineLoading || state is OutlineInitial) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Đóng đợt đồ án thì báo lỗi ở đây
+        // Trạng thái lỗi[cite: 9]
         if (state is OutlineError) {
           return Center(
             child: Text(
               state.message,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.red),
             ),
           );
         }
 
+        // Trạng thái đã tải dữ liệu thành công[cite: 9]
         if (state is OutlineLoaded) {
           final outline = state.outline;
-          String fileName = outline.outlineUrl.isNotEmpty
-              ? outline.outlineUrl.split('/').last
-              : "";
-          String fileExt = fileName.isNotEmpty
-              ? fileName.split('.').last.toLowerCase()
-              : "";
+          final huongDeTai = outline.topicDirection.isNotEmpty
+              ? outline.topicDirection
+              : "Chưa cập nhật";
+          final tenDeTai = outline.topicName.isNotEmpty
+              ? outline.topicName
+              : "Chưa cập nhật";
 
-          // Chọn Icon tùy theo loại file cho ngầu
-          IconData fileIcon = Icons.insert_drive_file;
-          Color iconColor = Colors.grey;
-          if (fileExt == 'pdf') {
-            fileIcon = Icons.picture_as_pdf;
-            iconColor = Colors.redAccent;
-          } else if (fileExt == 'doc' || fileExt == 'docx') {
-            fileIcon = Icons.description;
-            iconColor = Colors.blueAccent;
-          }
+          final fileUrl = outline.outlineUrl;
+          final hasFile = fileUrl.isNotEmpty;
 
           return Container(
             width: double.infinity,
@@ -103,128 +68,121 @@ class _StudentOutlineTabState extends State<StudentOutlineTab> {
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildInfoRow(
-                  "Hướng đề tài",
-                  outline.topicDirection.isNotEmpty
-                      ? outline.topicDirection
-                      : "Chưa có",
-                ),
+                _buildInfoSection("Hướng đề tài", huongDeTai),
                 const SizedBox(height: 20),
-                _buildInfoRow(
-                  "Tên đề tài",
-                  outline.topicName.isNotEmpty ? outline.topicName : "Chưa có",
-                ),
-                const SizedBox(height: 24),
+                _buildInfoSection("Tên đề tài", tenDeTai),
+                const SizedBox(height: 20),
 
                 const Text(
                   "Đề cương",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 const SizedBox(height: 8),
 
-                if (outline.outlineUrl.isEmpty)
-                  const Text(
-                    "Chưa có",
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
-                    ),
-                  )
-                else
-                  InkWell(
-                    onTap: () => _handleOpenFile(
-                      outline.outlineUrl,
-                    ), // GỌI HÀM XỬ LÝ Ở ĐÂY
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                // Nếu có file thì render UI Link PDF, nếu không thì báo chưa có[cite: 13, 20]
+                hasFile
+                    ? _buildPdfLink(context, fileUrl)
+                    : const Text(
+                        "Giảng viên chưa cập nhật đề cương.",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            fileIcon,
-                            color: iconColor,
-                            size: 36,
-                          ), // Icon động theo đuôi file
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              fileName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Icon(
-                              Icons.open_in_new, // Icon nút nhỏ cũng đổi theo
-                              color: Colors.black54,
-                              size: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
             ),
           );
         }
-
-        return const SizedBox.shrink();
+        return const SizedBox();
       },
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  // Widget hiển thị thông tin dạng tiêu đề + nội dung[cite: 20]
+  Widget _buildInfoSection(String title, String content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-            color: Colors.black87,
-          ),
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            color: value == "Chưa có" ? Colors.grey : Colors.black87,
-            fontStyle: value == "Chưa có" ? FontStyle.italic : FontStyle.normal,
-          ),
+          content,
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
         ),
       ],
+    );
+  }
+
+  // Widget hiển thị liên kết file PDF[cite: 13, 17]
+  Widget _buildPdfLink(BuildContext context, String fileUrl) {
+    final fileName = fileUrl
+        .split('/')
+        .last; // Cắt URL để lấy tên file hiển thị
+
+    return InkWell(
+      onTap: () async {
+        String rawPath = fileUrl;
+        String base = AppUrls.baseUrl.endsWith('/')
+            ? AppUrls.baseUrl.substring(0, AppUrls.baseUrl.length - 1)
+            : AppUrls.baseUrl;
+
+        String cleanPath = rawPath.startsWith('/')
+            ? rawPath.substring(1)
+            : rawPath;
+        String fullUrl = "$base/$cleanPath";
+
+        // Mã hóa URL để xử lý tiếng Việt
+        final String encodedUrl = Uri.encodeFull(fullUrl);
+        final Uri url = Uri.parse(encodedUrl);
+
+        try {
+          // THAY ĐỔI: Sử dụng inAppBrowserView thay vì externalApplication
+          // Chế độ này thường hiển thị PDF trực tiếp tốt hơn trên Android
+          await launchUrl(url, mode: LaunchMode.inAppBrowserView);
+        } catch (e) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Lỗi hiển thị: $e")));
+        }
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFEBEE),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.shade100),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.picture_as_pdf, color: Colors.red, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                fileName,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

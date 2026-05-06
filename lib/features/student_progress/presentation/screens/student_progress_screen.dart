@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-// Import BLoC của GVHD để gọi API
+import 'package:ql_do_an_tot_nghiep/features/student_progress/presentation/bloc/student_report_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_bloc.dart';
-// Import Tab Đề cương ông vừa làm
+import '../widgets/student_report_tab.dart';
 import '../widgets/student_outline_tab.dart';
 
 class StudentProgressScreen extends StatefulWidget {
   final String studentId;
-
-  const StudentProgressScreen({super.key, required this.studentId});
+  final String studentName;
+  const StudentProgressScreen({
+    super.key,
+    required this.studentId,
+    required this.studentName,
+  });
 
   @override
   State<StudentProgressScreen> createState() => _StudentProgressScreenState();
@@ -38,6 +41,7 @@ class _StudentProgressScreenState extends State<StudentProgressScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           "TIẾN ĐỘ",
           style: TextStyle(
@@ -118,9 +122,15 @@ class _StudentProgressScreenState extends State<StudentProgressScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: selectedTab == 0
-                  ? const Center(
-                      child: Text("Giao diện Báo cáo tiến độ (Làm sau)"),
+                  // THÊM BLOCPROVIDER BAO BỌC LẤY CÁI TAB BÁO CÁO NÀY
+                  ? BlocProvider(
+                      create: (context) => StudentReportBloc(),
+                      child: StudentReportTab(
+                        studentId: widget.studentId,
+                        studentName: widget.studentName,
+                      ),
                     )
+                  // --------------------------------------------------
                   : BlocProvider.value(
                       value: _outlineBloc,
                       child: StudentOutlineTab(studentId: widget.studentId),

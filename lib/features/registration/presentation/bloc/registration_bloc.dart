@@ -22,7 +22,6 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
             "${AppUrls.urlFetchTeachers}?student_id=${event.studentId}",
           ),
         );
-        print("Dữ liệu Server trả về: ${response.body}");
 
         if (response.statusCode == 200) {
           final dynamic decodedData = json.decode(response.body);
