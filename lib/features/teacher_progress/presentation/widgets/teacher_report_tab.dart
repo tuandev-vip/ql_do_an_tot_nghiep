@@ -38,6 +38,30 @@ class _TeacherReportTabState extends State<TeacherReportTab> {
         }
 
         if (state is ReportError) {
+          if (state.message.contains("NO_BATCH")) {
+            return const Center(
+              child: Text(
+                "Sinh viên này chưa có đợt đồ án nào đang diễn ra.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          } else if (state.message.contains("NO_OUTLINE")) {
+            return const Center(
+              child: Text(
+                "Vui lòng cập nhật đề cương bên Tab Đề Cương để xem tiến độ.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
           return Center(
             child: Text(
               state.message,

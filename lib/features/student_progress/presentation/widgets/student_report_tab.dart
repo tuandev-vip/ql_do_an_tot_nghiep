@@ -36,6 +36,31 @@ class _StudentReportTabState extends State<StudentReportTab> {
         }
 
         if (state is ReportError) {
+          if (state.message.contains("NO_BATCH")) {
+            return const Center(
+              child: Text(
+                "Hiện tại chưa có đợt đồ án nào đang diễn ra.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          } else if (state.message.contains("NO_OUTLINE")) {
+            return const Center(
+              child: Text(
+                "Chưa được báo cáo do giảng viên chưa cập nhật đề cương.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          }
+
+          // Lỗi mạng hoặc lỗi khác thì hiện màu đỏ như cũ
           return Center(
             child: Text(
               state.message,
