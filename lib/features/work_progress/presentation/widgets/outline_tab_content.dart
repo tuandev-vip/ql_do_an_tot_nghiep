@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../bloc/project_outline_bloc.dart';
 import '../bloc/project_outline_event.dart';
 import '../bloc/project_outline_state.dart';
-// TODO: ÔNG NHỚ KIỂM TRA LẠI ĐƯỜNG DẪN FILE NÀY CHO KHỚP VỚI PROJECT NHÉ
 import '../../../../core/untils/time_manager.dart';
 
 class OutlineTabContent extends StatefulWidget {

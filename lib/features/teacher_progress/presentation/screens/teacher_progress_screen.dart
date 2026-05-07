@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 // Import Bloc dùng chung
 import '../../../student_progress/presentation/bloc/student_report_bloc.dart';
 import '../../../work_progress/presentation/bloc/project_outline_bloc.dart';
-// Import Tab của Sinh viên (để xem đề cương) và Tab của Giảng viên (để chấm điểm)
-import '../../../student_progress/presentation/widgets/student_outline_tab.dart';
+
+// Import 2 Tab của Giảng viên
 import '../widgets/teacher_report_tab.dart';
+import '../../../work_progress/presentation/widgets/outline_tab_content.dart';
 
 class TeacherProgressScreen extends StatefulWidget {
   final String studentId;
-  final String studentName; // Hiện tên SV lên AppBar cho dễ nhìn
+  final String studentName;
 
   const TeacherProgressScreen({
     super.key,
@@ -52,27 +54,90 @@ class _TeacherProgressScreenState extends State<TeacherProgressScreen> {
       ),
       body: Column(
         children: [
-          // 1. Thanh Menu chọn Tab (Copy y hệt từ StudentProgressScreen của ông vào đây)
+          // 1. THANH MENU CHUYỂN TAB (Tui đã code lại cho ông đầy đủ ở đây)
           Container(
-            // ... Code tạo Row chứa 2 nút bấm "Báo cáo tiến độ" và "Đề cương"
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedTab = 0;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: selectedTab == 0
+                            ? const Color(0xFF2962FF)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Báo cáo tiến độ",
+                          style: TextStyle(
+                            color: selectedTab == 0
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedTab = 1;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: selectedTab == 1
+                            ? const Color(0xFF2962FF)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Đề cương",
+                          style: TextStyle(
+                            color: selectedTab == 1
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // 2. Nội dung hiển thị
+          // 2. NỘI DUNG HIỂN THỊ DƯỚI TAB
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: selectedTab == 0
                   ? BlocProvider(
                       create: (context) => StudentReportBloc(),
-                      child: TeacherReportTab(
-                        studentId: widget.studentId,
-                      ), // DÙNG TAB CỦA GIẢNG VIÊN
+                      // Tab chấm điểm báo cáo
+                      child: TeacherReportTab(studentId: widget.studentId),
                     )
                   : BlocProvider.value(
                       value: _outlineBloc,
-                      child: StudentOutlineTab(
-                        studentId: widget.studentId,
-                      ), // Dùng chung Tab đề cương của SV
+                      child: OutlineTabContent(studentId: widget.studentId),
                     ),
             ),
           ),
