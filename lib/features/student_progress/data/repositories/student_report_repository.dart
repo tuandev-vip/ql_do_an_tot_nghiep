@@ -39,6 +39,9 @@ class StudentReportRepository {
             Map<String, dynamic> reportsJson = data['reports'];
             reportsJson.forEach((key, value) {
               reportsMap[int.parse(key)] = WeeklyReportModel(
+                reportId: value['report_id'] != null
+                    ? int.parse(value['report_id'].toString())
+                    : null,
                 week: value['week'],
                 status: value['status'],
                 deadline: value['deadline'],
@@ -101,6 +104,29 @@ class StudentReportRepository {
       }
     } catch (e) {
       throw Exception("Lỗi Server trả về không hợp lệ:\n${response.body}");
+    }
+  }
+
+  Future<String> updateTeacherFeedback({
+    required int reportId,
+    required String feedback,
+  }) async {
+    final url = Uri.parse(AppUrls.updateReportFeedback);
+
+    try {
+      final response = await http.post(
+        url,
+        body: {'report_id': reportId.toString(), 'feedback': feedback},
+      );
+
+      final data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        return data['message'];
+      } else {
+        throw Exception(data['message']);
+      }
+    } catch (e) {
+      throw Exception("Không thể gửi nhận xét: $e");
     }
   }
 }

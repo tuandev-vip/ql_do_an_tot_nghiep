@@ -43,4 +43,8 @@ class AppUrls {
   // submit_report
   static const String submitReport =
       '$baseUrl/api/student/submit_weekly_report.php';
+
+  //confirm_report
+  static const String updateReportFeedback =
+      '$baseUrl/api/teacher/update_report_feedback.php';
 }

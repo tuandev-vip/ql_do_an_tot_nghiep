@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/student_progress_detail_screen.dart';
+// Import màn hình chi tiết dành cho Giảng viên
+import '../../../teacher_progress/presentation/screens/teacher_progress_screen.dart';
 
 class EvaluationStudentCard extends StatelessWidget {
   final Map<String, dynamic> student;
@@ -32,7 +33,7 @@ class EvaluationStudentCard extends StatelessWidget {
                 // Tên sinh viên
                 _buildRowInfo(
                   label: "Tên sinh viên",
-                  value: student['student_name'],
+                  value: student['student_name'] ?? 'Chưa cập nhật',
                   isLabelBold: true,
                   valueColor: Colors.black,
                   valueFontSize: 15,
@@ -42,7 +43,7 @@ class EvaluationStudentCard extends StatelessWidget {
                 // Mã sinh viên
                 _buildRowInfo(
                   label: "Mã sinh viên",
-                  value: student['student_code'],
+                  value: student['student_code'] ?? 'Chưa cập nhật',
                   isLabelBold: true,
                   valueColor: Colors.grey.shade600,
                 ),
@@ -52,23 +53,28 @@ class EvaluationStudentCard extends StatelessWidget {
                 // Tiến độ
                 _buildRowInfo(
                   label: "Tiến độ",
-                  value: "${student['progress']}/${student['total_progress']}",
+                  value:
+                      "${student['progress'] ?? 0}/${student['total_progress'] ?? 0}",
                 ),
                 const SizedBox(height: 16),
 
-                // Nút Xem tiến độ
                 // Nút Xem tiến độ
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // CHỈ SỬA ĐÚNG ĐOẠN NÀY: Lệnh chuyển màn hình
+                      // SỬA Ở ĐÂY: Chuyển sang màn hình của Giảng viên
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => StudentProgressDetailScreen(
-                            student:
-                                student, // Truyền nguyên cục data của ông SV này sang màn hình kia
+                          builder: (context) => TeacherProgressScreen(
+                            // Lấy ID sinh viên. Tùy API trả về key là 'student_id' hay 'id' mà ông điều chỉnh cho khớp nhé.
+                            studentId:
+                                student['student_id']?.toString() ??
+                                student['id']?.toString() ??
+                                '',
+                            // Truyền tên sinh viên
+                            studentName: student['student_name'] ?? 'Sinh viên',
                           ),
                         ),
                       );
@@ -94,8 +100,6 @@ class EvaluationStudentCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Dấu chấm đỏ (Notification Indicator) ở góc trên bên phải
         ],
       ),
     );

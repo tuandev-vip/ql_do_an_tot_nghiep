@@ -1,5 +1,6 @@
 class WeeklyReportModel {
   final int week;
+  final int? reportId;
   final String status;
   final String deadline;
   final String submitTime;
@@ -12,5 +13,6 @@ class WeeklyReportModel {
     this.submitTime = "",
     this.fileName = "",
     this.feedback = "",
+    this.reportId,
   });
 }
