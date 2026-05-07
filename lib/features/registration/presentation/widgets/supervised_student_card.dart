@@ -7,6 +7,20 @@ class SupervisedStudentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 💡 XỬ LÝ NULL VÀ SAI KEY Ở ĐÂY:
+    // Tự động tìm key đúng, nếu mảng JSON từ PHP trả về tên khác thì ông thêm vào đây
+    final studentCode =
+        student['student_code']?.toString() ??
+        student['student_id']?.toString() ??
+        student['id']?.toString() ??
+        'Chưa cập nhật';
+    final className = student['class_name']?.toString() ?? 'Chưa cập nhật';
+    final email = student['email']?.toString() ?? 'Chưa cập nhật';
+    final phone =
+        student['phone']?.toString() ??
+        student['phone_number']?.toString() ??
+        'Chưa cập nhật';
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -29,13 +43,18 @@ class SupervisedStudentCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                student['full_name'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Expanded(
+                child: Text(
+                  student['full_name'] ?? 'Tên sinh viên',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               // Thêm cái tag "Đang hướng dẫn" cho chuyên nghiệp
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -54,50 +73,62 @@ class SupervisedStudentCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _infoItem(
-                Icons.badge_outlined,
-                "Mã SV: ${student['student_code']}",
-              ),
-              const SizedBox(width: 20),
-              _infoItem(
-                Icons.class_outlined,
-                "Lớp: ${student['class_name'] ?? "KTPM K21"}",
-              ),
-            ],
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(
+              height: 1,
+              color: Color(0xFFEEEEEE),
+            ), // Thêm gạch ngang cho đẹp
           ),
-          const SizedBox(height: 8),
-          _infoItem(Icons.email_outlined, "Email: ${student['email']}"),
-          const SizedBox(height: 8),
-          const Text(
-            "Hướng đề tài:",
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            student['topic_direction'] ?? "Chưa xác định",
-            style: TextStyle(
-              color: Colors.blueGrey.shade700,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
+
+          _infoItem(Icons.badge_outlined, "Mã SV", studentCode),
+          const SizedBox(height: 10),
+          _infoItem(Icons.class_outlined, "Lớp", className),
+          const SizedBox(height: 10),
+          _infoItem(Icons.email_outlined, "Email", email),
+          const SizedBox(height: 10),
+          _infoItem(
+            Icons.phone_outlined,
+            "Phone",
+            phone,
+          ), // Đã thêm số điện thoại
         ],
       ),
     );
   }
 
-  Widget _infoItem(IconData icon, String text) {
+  // 💡 HÀM NÀY ĐÃ ĐƯỢC SỬA LẠI ĐỂ CĂN HAI BÊN
+  Widget _infoItem(IconData icon, String label, String value) {
     return Row(
+      mainAxisAlignment:
+          MainAxisAlignment.spaceBetween, // Đẩy 2 phần tử ra 2 mép
       children: [
-        Icon(icon, size: 14, color: Colors.grey),
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+        // Cụm Icon + Nhãn (bên trái)
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.grey.shade600),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            ),
+          ],
+        ),
+        // Giá trị (bên phải)
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right, // Ép text căn phải
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis, // Nếu dài quá thì hiện "..."
+          ),
+        ),
       ],
     );
   }

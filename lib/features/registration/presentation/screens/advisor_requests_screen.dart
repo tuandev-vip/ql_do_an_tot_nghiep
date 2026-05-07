@@ -34,6 +34,7 @@ class _AdvisorRequestsScreenState extends State<AdvisorRequestsScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7F9), // Nền xám nhạt sang trọng
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text(
             "QUẢN LÝ SINH VIÊN",
             style: TextStyle(
