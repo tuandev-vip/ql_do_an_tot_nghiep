@@ -69,7 +69,7 @@ class StudentReportRepository {
         throw Exception('Lỗi kết nối server: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Không thể tải dữ liệu tiến độ. Chi tiết: $e');
+      throw Exception('Không thể xem vì đã bị đình chỉ');
     }
   }
 

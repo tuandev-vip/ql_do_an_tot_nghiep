@@ -6,6 +6,9 @@ import '../bloc/student_report_event.dart';
 import '../bloc/student_report_state.dart';
 import 'report_detail_card.dart';
 
+// 🚨 NHỚ IMPORT FILE MÀN HÌNH ĐÌNH CHỈ VÀO ĐÂY NHÉ (Sửa lại đường dẫn nếu cần)
+import '../screens/student_stopped_screen.dart';
+
 class StudentReportTab extends StatefulWidget {
   final String studentId;
   final String studentName;
@@ -29,13 +32,37 @@ class _StudentReportTabState extends State<StudentReportTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<StudentReportBloc, StudentReportState>(
+    // 💡 ĐỔI BlocBuilder THÀNH BlocConsumer ĐỂ DÙNG ĐƯỢC listener
+    return BlocConsumer<StudentReportBloc, StudentReportState>(
+      // 1. NƠI LẮNG NGHE ĐỂ ĐÁ VĂNG
+      listener: (context, state) {
+        if (state is ReportError) {
+          // Bắt được chữ STOPPED từ API
+          if (state.message.contains("STOPPED")) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StudentStoppedScreen(),
+                ),
+                (route) => false, // Xóa sạch lịch sử, cấm back lại
+              );
+            });
+          }
+        }
+      },
+      // 2. NƠI VẼ GIAO DIỆN
       builder: (context, state) {
         if (state is ReportLoading || state is ReportInitial) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (state is ReportError) {
+          // 💡 Nếu là lỗi STOPPED thì ẩn luôn UI đi (vì đằng nào cũng bị đá văng ở listener rồi)
+          if (state.message.contains("STOPPED")) {
+            return const SizedBox();
+          }
+
           if (state.message.contains("NO_BATCH")) {
             return const Center(
               child: Text(
@@ -121,7 +148,7 @@ class _StudentReportTabState extends State<StudentReportTab> {
 }
 
 // =====================================================================
-// COMPONENT 1: THANH DROPDOWN CHỌN TUẦN (ĐÃ NÂNG CẤP DÙNG MODEL)
+// COMPONENT 1: THANH DROPDOWN CHỌN TUẦN (GIỮ NGUYÊN)
 // =====================================================================
 class WeekSelectorDropdown extends StatelessWidget {
   final int selectedWeek;

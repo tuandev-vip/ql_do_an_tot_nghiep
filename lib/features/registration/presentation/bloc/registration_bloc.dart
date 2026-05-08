@@ -159,7 +159,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
                 .where((s) => s['status'] == 'PENDING')
                 .toList();
             final approved = decodedData
-                .where((s) => s['status'] == 'APPROVED')
+                .where(
+                  (s) => s['status'] == 'APPROVED' || s['status'] == 'STOPPED',
+                )
                 .toList();
             emit(AdvisorStudentsLoaded(pending, approved));
           } else {

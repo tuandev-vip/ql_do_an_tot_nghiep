@@ -4,6 +4,8 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/bloc/a
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screens/auto_assignment_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/student_progress/presentation/screens/student_progress_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_evaluation_bloc.dart';
@@ -206,7 +208,20 @@ class _MainWrapperState extends State<MainWrapper> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          // 1. Cập nhật index để chuyển màn hình như bình thường
+          setState(() => _currentIndex = index);
+
+          //  2. KIỂM TRA NẾU LÀ GIẢNG VIÊN VÀ NHẤN VÀO TAB KIỂM DUYỆT
+          if (widget.user.role == 'TEACHER') {
+            if (index == 1) {
+              // Ép RegistrationBloc chạy lại lệnh lấy danh sách mới nhất
+              context.read<RegistrationBloc>().add(
+                FetchAdvisorStudentsEvent(widget.userData.id),
+              );
+            }
+          }
+        },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2196F3),
         unselectedItemColor: Colors.grey[600],
