@@ -47,4 +47,12 @@ class AppUrls {
   //confirm_report
   static const String updateReportFeedback =
       '$baseUrl/api/teacher/update_report_feedback.php';
+
+  // Lấy thông tin điểm hiện tại và kiểm tra thời hạn (Chưa mở/Đang mở/Quá hạn)
+  static const String getStudentGrade =
+      "$baseUrl/api/teacher/get_student_grade.php";
+
+  // Cập nhật điểm hướng dẫn (process_score) cho sinh viên vào bảng projects
+  static const String updateStudentGrade =
+      "$baseUrl/api/teacher/update_student_grade.php";
 }

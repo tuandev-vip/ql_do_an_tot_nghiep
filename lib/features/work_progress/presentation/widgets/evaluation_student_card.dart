@@ -33,7 +33,10 @@ class EvaluationStudentCard extends StatelessWidget {
                 // Tên sinh viên
                 _buildRowInfo(
                   label: "Tên sinh viên",
-                  value: student['student_name'] ?? 'Chưa cập nhật',
+                  value:
+                      student['student_name'] ??
+                      student['full_name'] ??
+                      'Chưa cập nhật',
                   isLabelBold: true,
                   valueColor: Colors.black,
                   valueFontSize: 15,
@@ -63,19 +66,12 @@ class EvaluationStudentCard extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // SỬA Ở ĐÂY: Chuyển sang màn hình của Giảng viên
+                      // 💡 SỬA Ở ĐÂY: Chuyển sang màn hình Giảng viên và truyền NGUYÊN CỤC student sang
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TeacherProgressScreen(
-                            // Lấy ID sinh viên. Tùy API trả về key là 'student_id' hay 'id' mà ông điều chỉnh cho khớp nhé.
-                            studentId:
-                                student['student_id']?.toString() ??
-                                student['id']?.toString() ??
-                                '',
-                            // Truyền tên sinh viên
-                            studentName: student['student_name'] ?? 'Sinh viên',
-                          ),
+                          builder: (context) =>
+                              TeacherProgressScreen(studentData: student),
                         ),
                       );
                     },
