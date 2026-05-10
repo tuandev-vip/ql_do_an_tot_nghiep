@@ -201,9 +201,15 @@ class _CouncilTabViewState extends State<CouncilTabView> {
   }
 
   void _showCreateDialog(BuildContext context, int totalSv) {
+    final councilBloc = context.read<CouncilBloc>();
+
     showDialog(
       context: context,
-      builder: (ctx) => CreateCouncilDialog(totalStudents: totalSv),
+      builder: (ctx) => BlocProvider.value(
+        // 💡 2. Dùng BlocProvider.value để "tuồn" cái Bloc đó vào trong Popup
+        value: councilBloc,
+        child: CreateCouncilDialog(totalStudents: totalSv),
+      ),
     );
   }
 }
