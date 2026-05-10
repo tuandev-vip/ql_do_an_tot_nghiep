@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/bloc/auto_assignment_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screens/auto_assignment_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_event.dart';
@@ -172,6 +173,17 @@ class _MainWrapperState extends State<MainWrapper> {
           screen: const BatchManagementScreen(),
         ),
       );
+
+      configs.add(
+        _NavConfig(
+          item: const BottomNavigationBarItem(
+            icon: Icon(Icons.person_2),
+            label: "Hội đồng",
+          ),
+          screen: const CouncilManagementScreen(),
+        ),
+      );
+
       configs.add(
         _NavConfig(
           item: const BottomNavigationBarItem(

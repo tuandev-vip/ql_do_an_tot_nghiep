@@ -32,6 +32,7 @@ class BatchManagementScreen extends StatelessWidget {
         ),
 
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: "unique_batch_btn",
           backgroundColor: const Color(0xFF2196F3),
           onPressed: () async {
             final batchBloc = context.read<BatchBloc>();
