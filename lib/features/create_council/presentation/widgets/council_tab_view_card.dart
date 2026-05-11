@@ -5,6 +5,7 @@ import '../bloc/council_event.dart';
 import '../bloc/council_state.dart';
 import 'create_council_dialog_card.dart';
 import 'council_card.dart';
+import 'assign_department_dialog.dart';
 
 class CouncilTabView extends StatefulWidget {
   final bool isSchoolLevel;
@@ -93,13 +94,18 @@ class _CouncilTabViewState extends State<CouncilTabView>
 
         int totalSv = 0;
         List<dynamic> councilList = [];
-        String timeStatus = 'LOCKED';
+
+        // 💡 KHAI BÁO 2 BIẾN THỜI GIAN RIÊNG BIỆT
+        String createTimeStatus = 'LOCKED';
+        String assignTimeStatus = 'LOCKED';
         bool isFetchingMore = false;
 
         if (state is CouncilLoaded) {
           totalSv = state.totalStudents;
           councilList = state.councils;
-          timeStatus = state.timeStatus;
+          // 💡 LẤY DỮ LIỆU TỪ STATE MỚI
+          createTimeStatus = state.createTimeStatus;
+          assignTimeStatus = state.assignTimeStatus;
           isFetchingMore = state.isFetchingMore;
         }
 
@@ -127,14 +133,14 @@ class _CouncilTabViewState extends State<CouncilTabView>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 💡 NÚT TẠO HỘI ĐỒNG
+            // 💡 NÚT TẠO HỘI ĐỒNG (Dùng biến createTimeStatus)
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (timeStatus == 'LOCKED') {
+                    if (createTimeStatus == 'LOCKED') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
@@ -142,13 +148,13 @@ class _CouncilTabViewState extends State<CouncilTabView>
                           ),
                         ),
                       );
-                    } else if (timeStatus == 'OVERDUE') {
+                    } else if (createTimeStatus == 'OVERDUE') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Đã quá hạn tạo hội đồng!"),
                         ),
                       );
-                    } else if (timeStatus == 'NO_BATCH') {
+                    } else if (createTimeStatus == 'NO_BATCH') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Hiện tại chưa có đợt đồ án nào!"),
@@ -159,7 +165,7 @@ class _CouncilTabViewState extends State<CouncilTabView>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: (timeStatus == 'OPEN')
+                    backgroundColor: (createTimeStatus == 'OPEN')
                         ? const Color(0xFF2962FF)
                         : Colors.grey,
                     shape: RoundedRectangleBorder(
@@ -253,6 +259,14 @@ class _CouncilTabViewState extends State<CouncilTabView>
                             int.tryParse(council['member_count'].toString()) ??
                             0;
 
+                        // 💡 KIỂM TRA ĐÃ PHÂN BỘ MÔN CHƯA
+                        final bool isAlreadyAssigned =
+                            council['department_code'] != null &&
+                            council['department_code']
+                                .toString()
+                                .trim()
+                                .isNotEmpty;
+
                         return CouncilCard(
                           councilName: council['council_name'] ?? 'N/A',
                           councilCode: council['council_code'] ?? 'N/A',
@@ -270,6 +284,56 @@ class _CouncilTabViewState extends State<CouncilTabView>
                               'Chưa phân loại',
                           showAssignButton:
                               council['council_type'] == 'Tổng hợp',
+
+                          // 💡 SỬ DỤNG assignTimeStatus CHO NÚT "PHÂN BỘ MÔN"
+                          isTimeValid: assignTimeStatus == 'OPEN',
+
+                          // Khóa nút nếu đã phân rồi
+                          isAssigned: isAlreadyAssigned,
+
+                          onAssignPressed: () {
+                            // 💡 Kiểm tra bằng assignTimeStatus
+                            if (assignTimeStatus == 'LOCKED') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Chưa qua hạn nhập điểm, không thể phân bộ môn!",
+                                  ),
+                                ),
+                              );
+                            } else if (assignTimeStatus == 'OVERDUE') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Đã quá hạn phân bộ môn!"),
+                                ),
+                              );
+                            } else if (assignTimeStatus == 'NO_BATCH') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Hiện tại chưa có đợt đồ án nào!",
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // Đúng hạn (OPEN) thì mới cho mở Popup chia người
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => BlocProvider.value(
+                                  value: context.read<CouncilBloc>(),
+                                  child: AssignDepartmentDialog(
+                                    councilId:
+                                        int.tryParse(
+                                          council['council_id'].toString(),
+                                        ) ??
+                                        0,
+                                    councilCode:
+                                        council['council_code'] ?? 'N/A',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
                         );
                       },
                     ),

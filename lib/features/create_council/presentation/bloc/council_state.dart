@@ -5,13 +5,16 @@ class CouncilInitial extends CouncilState {}
 class CouncilLoading extends CouncilState {}
 
 class CouncilLoaded extends CouncilState {
-  final String timeStatus;
+  final String createTimeStatus; // 💡 Đổi tên
+  final String assignTimeStatus; // 💡 Thêm biến
   final int totalStudents;
   final List<dynamic> councils;
-  final bool hasReachedMax; // 💡 Cờ báo hiệu đã tải hết sạch data chưa
+  final bool hasReachedMax;
   final bool isFetchingMore;
+
   CouncilLoaded({
-    required this.timeStatus,
+    required this.createTimeStatus,
+    required this.assignTimeStatus,
     required this.totalStudents,
     required this.councils,
     this.hasReachedMax = false,
@@ -19,14 +22,16 @@ class CouncilLoaded extends CouncilState {
   });
 
   CouncilLoaded copyWith({
-    String? timeStatus,
+    String? createTimeStatus,
+    String? assignTimeStatus,
     int? totalStudents,
     List<dynamic>? councils,
     bool? hasReachedMax,
     bool? isFetchingMore,
   }) {
     return CouncilLoaded(
-      timeStatus: timeStatus ?? this.timeStatus,
+      createTimeStatus: createTimeStatus ?? this.createTimeStatus,
+      assignTimeStatus: assignTimeStatus ?? this.assignTimeStatus,
       totalStudents: totalStudents ?? this.totalStudents,
       councils: councils ?? this.councils,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,

@@ -10,3 +10,9 @@ class AutoCreateCouncilEvent extends CouncilEvent {
   final int capacity; // Chỉ cần sức chứa
   AutoCreateCouncilEvent(this.capacity);
 }
+
+class AssignDepartmentEvent extends CouncilEvent {
+  final int councilId;
+  final String departmentData; // Lưu chuỗi JSON: {"CNPM":2, "MATTT":1}
+  AssignDepartmentEvent(this.councilId, this.departmentData);
+}

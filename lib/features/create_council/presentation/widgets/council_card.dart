@@ -6,8 +6,11 @@ class CouncilCard extends StatelessWidget {
   final int studentCount;
   final String memberCountText;
   final String councilType;
-  final String topicDirection; // 💡 Thêm biến này để nhận danh sách Hướng
+  final String topicDirection;
   final bool showAssignButton;
+  final VoidCallback? onAssignPressed;
+  final bool isTimeValid;
+  final bool isAssigned; // 💡 Đã có biến này
 
   const CouncilCard({
     super.key,
@@ -16,31 +19,30 @@ class CouncilCard extends StatelessWidget {
     required this.studentCount,
     required this.memberCountText,
     required this.councilType,
-    required this.topicDirection, // 💡 Bắt buộc truyền vào
+    required this.topicDirection,
     this.showAssignButton = false,
+    this.onAssignPressed,
+    this.isTimeValid = true,
+    this.isAssigned = false, // 💡 Mặc định là chưa phân
   });
 
-  // 💡 Hàm "Ma thuật" cắt cúp chuỗi hướng đề tài
+  // Hàm cắt cúp chuỗi hướng đề tài
   String _formatTopicDirection(String direction) {
     if (direction.isEmpty || direction == "Chưa phân loại")
       return "Chưa xác định";
 
-    // Đề phòng trường hợp API trả về chuỗi cứng cũ
     if (direction == "Tổng hợp nhiều hướng") return "Hỗn hợp nhiều hướng";
 
-    // Tách chuỗi bằng dấu phẩy và làm sạch khoảng trắng
     List<String> topics = direction
         .split(',')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
 
-    // Nếu có 3 hướng trở xuống -> Cho hiện hết
     if (topics.length <= 3) {
       return topics.join(', ');
     }
 
-    // Nếu nhiều hơn 3 hướng -> Cắt lấy 3 thằng đầu + đếm phần dư
     String firstThree = topics.take(3).join(', ');
     int remaining = topics.length - 3;
     return "$firstThree... (+$remaining hướng)";
@@ -91,8 +93,6 @@ class CouncilCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildRowInfo("Thành viên :", memberCountText),
                 const SizedBox(height: 12),
-
-                // 💡 Hiển thị Loại Hội đồng và Hướng theo quy tắc mới
                 _buildRowInfo("Hướng :", _formatTopicDirection(topicDirection)),
 
                 // Nút Phân bộ môn (chỉ hiện cho HĐ Tổng hợp)
@@ -101,16 +101,23 @@ class CouncilCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      // 💡 SỬA Ở ĐÂY 1: Nếu đã phân (isAssigned = true) thì gán null để khóa nút
+                      onPressed: isAssigned ? null : onAssignPressed,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2962FF),
+                        backgroundColor: isTimeValid
+                            ? const Color(0xFF2962FF)
+                            : Colors.grey,
+                        // 💡 SỬA Ở ĐÂY 2: Cài đặt màu Xám và chữ trắng khi nút bị khóa
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        disabledForegroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        "Phân bộ môn",
-                        style: TextStyle(color: Colors.white),
+                      child: Text(
+                        // 💡 SỬA Ở ĐÂY 3: Tự động đổi chữ dựa vào trạng thái
+                        isAssigned ? "Đã phân" : "Phân bộ môn",
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -123,25 +130,24 @@ class CouncilCard extends StatelessWidget {
     );
   }
 
-  // 💡 Nâng cấp hàm RowInfo để chống lỗi tràn chữ (Overflow)
+  // Hàm RowInfo
   Widget _buildRowInfo(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start, // Ép chữ căn sát lên trên
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 16),
-        // 💡 Expanded giúp chữ tự xuống dòng hoặc bị cắt đẹp mắt nếu quá dài
         Expanded(
           child: Text(
             value,
             textAlign: TextAlign.right,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-            maxLines: 2, // Tối đa 2 dòng
-            overflow: TextOverflow.ellipsis, // Quá 2 dòng thì hiện ...
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
