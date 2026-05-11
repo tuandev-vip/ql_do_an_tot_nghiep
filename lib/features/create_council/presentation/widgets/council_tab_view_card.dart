@@ -15,25 +15,62 @@ class CouncilTabView extends StatefulWidget {
   State<CouncilTabView> createState() => _CouncilTabViewState();
 }
 
-class _CouncilTabViewState extends State<CouncilTabView> {
+// 💡 1. Thêm "with AutomaticKeepAliveClientMixin" vào đây
+class _CouncilTabViewState extends State<CouncilTabView>
+    with AutomaticKeepAliveClientMixin {
   String selectedFilter = 'Tất cả';
 
   final List<String> filterOptions = [
     'Tất cả',
     'Hội đồng thường',
     'Hội đồng tổng hợp',
-    'HĐ thường (thiếu TV)',
-    'HĐ tổng hợp (thiếu TV)',
   ];
+
+  final ScrollController _scrollController = ScrollController();
+
+  // 💡 2. Bật cờ KeepAlive để giữ trạng thái Tab không bị load lại
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    context.read<CouncilBloc>().add(FetchCouncilInfoEvent());
+    _scrollController.addListener(_onScroll); // Lắng nghe ngón tay
+    context.read<CouncilBloc>().add(
+      FetchCouncilInfoEvent(
+        isSchoolLevel: widget.isSchoolLevel,
+        isRefresh: true,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // 💡 Thuật toán kiểm tra chạm đáy
+  void _onScroll() {
+    // Nếu vuốt xuống cách đáy 50 pixel -> Bắn lệnh tải thêm
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50) {
+      final state = context.read<CouncilBloc>().state;
+      if (state is CouncilLoaded &&
+          !state.hasReachedMax &&
+          !state.isFetchingMore) {
+        context.read<CouncilBloc>().add(
+          FetchCouncilInfoEvent(isSchoolLevel: widget.isSchoolLevel),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 💡 3. BẮT BUỘC phải có dòng này ở đầu hàm build để kích hoạt bùa KeepAlive
+    super.build(context);
+
     return BlocConsumer<CouncilBloc, CouncilState>(
       listener: (context, state) {
         if (state is CouncilActionSuccess) {
@@ -57,121 +94,161 @@ class _CouncilTabViewState extends State<CouncilTabView> {
         int totalSv = 0;
         List<dynamic> councilList = [];
         String timeStatus = 'LOCKED';
+        bool isFetchingMore = false;
 
         if (state is CouncilLoaded) {
           totalSv = state.totalStudents;
           councilList = state.councils;
           timeStatus = state.timeStatus;
+          isFetchingMore = state.isFetchingMore;
         }
 
+        List<dynamic> filteredCouncils = councilList.where((council) {
+          if (selectedFilter == 'Tất cả') return true;
+
+          String type = council['council_type']?.toString() ?? 'Thường';
+          int memberCount =
+              int.tryParse(council['member_count']?.toString() ?? '0') ?? 0;
+
+          switch (selectedFilter) {
+            case 'Hội đồng thường':
+              return type == 'Thường';
+            case 'Hội đồng tổng hợp':
+              return type == 'Tổng hợp';
+            case 'HĐ thường (thiếu TV)':
+              return type == 'Thường' && memberCount < 3;
+            case 'HĐ tổng hợp (thiếu TV)':
+              return type == 'Tổng hợp' && memberCount < 3;
+            default:
+              return true;
+          }
+        }).toList();
+
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 💡 NÚT TẠO HỘI ĐỒNG
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 40,
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: selectedFilter,
-                          icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (timeStatus == 'LOCKED') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Chưa qua hạn nhập điểm, không thể tạo hội đồng!",
                           ),
-                          onChanged: (String? newValue) {
-                            setState(() => selectedFilter = newValue!);
-                          },
-                          items: filterOptions.map<DropdownMenuItem<String>>((
-                            String value,
-                          ) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
                         ),
-                      ),
+                      );
+                    } else if (timeStatus == 'OVERDUE') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Đã quá hạn tạo hội đồng!"),
+                        ),
+                      );
+                    } else if (timeStatus == 'NO_BATCH') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Hiện tại chưa có đợt đồ án nào!"),
+                        ),
+                      );
+                    } else {
+                      _showCreateDialog(context, totalSv);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (timeStatus == 'OPEN')
+                        ? const Color(0xFF2962FF)
+                        : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    "Tạo hội đồng tự động",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (timeStatus == 'LOCKED') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Chưa qua hạn nhập điểm, không thể tạo hội đồng!",
-                            ),
-                          ),
-                        );
-                      } else if (timeStatus == 'OVERDUE') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Đã quá hạn tạo hội đồng!"),
-                          ),
-                        );
-                      } else if (timeStatus == 'NO_BATCH') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Hiện tại chưa có đợt đồ án nào!"),
-                          ),
-                        );
-                      } else {
-                        _showCreateDialog(context, totalSv);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: (timeStatus == 'OPEN')
-                          ? const Color(0xFF2962FF)
-                          : Colors.grey,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      "Tạo hội đồng",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
 
+            // 💡 THANH LỌC DẠNG THẺ VUỐT NGANG
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: filterOptions.map((String value) {
+                  final isSelected = selectedFilter == value;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(value),
+                      selected: isSelected,
+                      showCheckmark: false, // Tắt dấu tick cho hiện đại
+                      onSelected: (bool selected) {
+                        if (selected) {
+                          setState(() => selectedFilter = value);
+                        }
+                      },
+                      selectedColor: const Color(0xFF2962FF).withOpacity(0.1),
+                      backgroundColor: Colors.white,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? const Color(0xFF2962FF)
+                            : Colors.black87,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF2962FF)
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            // 💡 DANH SÁCH
             Expanded(
-              child: councilList.isEmpty
+              child: filteredCouncils.isEmpty
                   ? const Center(
                       child: Text(
-                        "Chưa có hội đồng nào được tạo",
+                        "Không có hội đồng nào phù hợp",
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      controller: _scrollController,
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        top: 4,
+                        bottom: 80,
                       ),
-                      itemCount: councilList.length,
+                      itemCount:
+                          filteredCouncils.length + (isFetchingMore ? 1 : 0),
                       itemBuilder: (context, index) {
-                        final council = councilList[index];
+                        if (index >= filteredCouncils.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+
+                        final council = filteredCouncils[index];
                         final memberCount =
                             int.tryParse(council['member_count'].toString()) ??
                             0;
@@ -188,6 +265,9 @@ class _CouncilTabViewState extends State<CouncilTabView> {
                               ? "Chưa có"
                               : "$memberCount/3",
                           councilType: council['council_type'] ?? 'Thường',
+                          topicDirection:
+                              council['topic_direction']?.toString() ??
+                              'Chưa phân loại',
                           showAssignButton:
                               council['council_type'] == 'Tổng hợp',
                         );
@@ -206,7 +286,6 @@ class _CouncilTabViewState extends State<CouncilTabView> {
     showDialog(
       context: context,
       builder: (ctx) => BlocProvider.value(
-        // 💡 2. Dùng BlocProvider.value để "tuồn" cái Bloc đó vào trong Popup
         value: councilBloc,
         child: CreateCouncilDialog(totalStudents: totalSv),
       ),

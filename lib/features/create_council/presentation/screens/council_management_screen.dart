@@ -15,17 +15,19 @@ class CouncilManagementScreen extends StatefulWidget {
 class _CouncilManagementScreenState extends State<CouncilManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
+  late CouncilBloc _councilBloc;
   @override
   void initState() {
     super.initState();
     // 💡 Khởi tạo TabController thủ công, vsync: this giúp nó "ngủ" khi màn hình bị giấu
     _tabController = TabController(length: 2, vsync: this);
+    _councilBloc = CouncilBloc();
   }
 
   @override
   void dispose() {
     _tabController.dispose(); // Hủy để giải phóng RAM khi thoát
+    _councilBloc.close();
     super.dispose();
   }
 
@@ -37,8 +39,8 @@ class _CouncilManagementScreenState extends State<CouncilManagementScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => CouncilBloc(),
+    return BlocProvider.value(
+      value: _councilBloc,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: const Color(0xFFF5F7F9),

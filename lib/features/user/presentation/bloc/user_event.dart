@@ -1,6 +1,9 @@
 abstract class UserEvent {}
 
-class FetchUsersEvent extends UserEvent {}
+class FetchUsersEvent extends UserEvent {
+  final bool isRefresh; // 💡 Kích hoạt để reset về trang 1
+  FetchUsersEvent({this.isRefresh = false});
+}
 
 class SearchUserEvent extends UserEvent {
   final String query;

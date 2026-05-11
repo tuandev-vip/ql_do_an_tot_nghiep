@@ -7,14 +7,36 @@ class UserInitial extends UserState {}
 class UserLoading extends UserState {}
 
 class UserLoaded extends UserState {
-  final List<UserDataModel> users; // Danh sách hiển thị (đã lọc hoặc tất cả)
+  final List<UserDataModel> users;
   final int teacherCount;
   final int studentCount;
+  final bool hasReachedMax; // 💡 Đã hết data chưa
+  final bool isFetchingMore; // 💡 Đang xoay xoay dưới đáy không
+
   UserLoaded({
     required this.users,
     required this.teacherCount,
     required this.studentCount,
+    this.hasReachedMax = false,
+    this.isFetchingMore = false,
   });
+
+  // 💡 Hàm Copy hỗ trợ cuộn mượt
+  UserLoaded copyWith({
+    List<UserDataModel>? users,
+    int? teacherCount,
+    int? studentCount,
+    bool? hasReachedMax,
+    bool? isFetchingMore,
+  }) {
+    return UserLoaded(
+      users: users ?? this.users,
+      teacherCount: teacherCount ?? this.teacherCount,
+      studentCount: studentCount ?? this.studentCount,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      isFetchingMore: isFetchingMore ?? this.isFetchingMore,
+    );
+  }
 }
 
 class UserError extends UserState {
@@ -29,5 +51,7 @@ class PasswordResetSuccess extends UserLoaded {
     required super.users,
     required super.teacherCount,
     required super.studentCount,
+    super.hasReachedMax,
+    super.isFetchingMore,
   });
 }

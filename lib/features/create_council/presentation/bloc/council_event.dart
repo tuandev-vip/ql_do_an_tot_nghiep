@@ -2,7 +2,8 @@ abstract class CouncilEvent {}
 
 class FetchCouncilInfoEvent extends CouncilEvent {
   final bool isSchoolLevel;
-  FetchCouncilInfoEvent({this.isSchoolLevel = false});
+  final bool isRefresh;
+  FetchCouncilInfoEvent({this.isSchoolLevel = false, this.isRefresh = false});
 }
 
 class AutoCreateCouncilEvent extends CouncilEvent {

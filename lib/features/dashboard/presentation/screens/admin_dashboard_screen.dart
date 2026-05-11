@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
 import '../../../user/presentation/bloc/user_state.dart';
@@ -7,24 +8,71 @@ import '../../../batch/presentation/bloc/batch_bloc.dart';
 import '../../../batch/presentation/bloc/batch_state.dart';
 import '../widgets/test_mode_card.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    // 💡 Gắn ăng-ten lắng nghe sự kiện cuộn
+    _scrollController.addListener(_onScroll);
+    context.read<UserBloc>().add(FetchUsersEvent(isRefresh: true));
+  }
+
+  // 💡 Thuật toán chạm đáy tải thêm
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50) {
+      final state = context.read<UserBloc>().state;
+      if (state is UserLoaded &&
+          !state.hasReachedMax &&
+          !state.isFetchingMore) {
+        context.read<UserBloc>().add(FetchUsersEvent());
+      }
+    }
+  }
+
+  // 💡 Chống spam gõ tìm kiếm
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      context.read<UserBloc>().add(SearchUserEvent(query));
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
-        title: Center(
+        title: const Center(
           child: Text(
             "ICTU",
-
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 30,
+              color: Colors.white,
+            ),
           ),
         ),
         backgroundColor: Colors.blueAccent,
+        elevation: 0,
       ),
-      // Dùng BlocListener để hiện thông báo khi reset mật khẩu thành công
       body: BlocListener<UserBloc, UserState>(
         listener: (context, state) {
           if (state is PasswordResetSuccess) {
@@ -37,137 +85,179 @@ class AdminDashboardScreen extends StatelessWidget {
             );
           }
         },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. CỖ MÁY THỜI GIAN (Giữ lại để test đợt)
-              BlocBuilder<BatchBloc, BatchState>(
-                builder: (context, state) {
-                  final activeBatch =
-                      (state is BatchLoaded && state.batches.isNotEmpty)
-                      ? state.batches.firstWhere(
-                          (b) => b.isClosed == 0,
-                          orElse: () => state.batches.first,
-                        )
-                      : null;
-                  return TestModeCard(activeBatch: activeBatch);
-                },
-              ),
-              const SizedBox(height: 20),
+        // 💡 SỬ DỤNG CUSTOM SCROLL VIEW ĐỂ CUỘN FULL MÀN HÌNH NHƯNG VẪN LAZY LOAD
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // ----------------------------------------------------
+            // PHẦN 1: HEADER (Được bọc trong SliverToBoxAdapter)
+            // ----------------------------------------------------
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    BlocBuilder<BatchBloc, BatchState>(
+                      builder: (context, state) {
+                        final activeBatch =
+                            (state is BatchLoaded && state.batches.isNotEmpty)
+                            ? state.batches.firstWhere(
+                                (b) => b.isClosed == 0,
+                                orElse: () => state.batches.first,
+                              )
+                            : null;
+                        return TestModeCard(activeBatch: activeBatch);
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // 2. CARD THỐNG KÊ (Lấy số lượng từ UserBloc)
-              const Text(
-                "Thống kê người dùng",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              BlocBuilder<UserBloc, UserState>(
-                builder: (context, state) {
-                  int tCount = 0;
-                  int sCount = 0;
-                  if (state is UserLoaded) {
-                    tCount = state.teacherCount;
-                    sCount = state.studentCount;
-                  }
-                  return Row(
-                    children: [
-                      _buildStatCard(
-                        "Giảng viên",
-                        "$tCount",
-                        Icons.groups_outlined,
-                        Colors.blue,
+                    const Text(
+                      "Thống kê người dùng",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 12),
-                      _buildStatCard(
-                        "Sinh viên",
-                        "$sCount",
-                        Icons.school_outlined,
-                        Colors.orange,
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
+                    ),
+                    const SizedBox(height: 8),
+                    BlocBuilder<UserBloc, UserState>(
+                      builder: (context, state) {
+                        int tCount = 0, sCount = 0;
+                        if (state is UserLoaded) {
+                          tCount = state.teacherCount;
+                          sCount = state.studentCount;
+                        }
+                        return Row(
+                          children: [
+                            _buildStatCard(
+                              "Giảng viên",
+                              "$tCount",
+                              Icons.groups_outlined,
+                              Colors.blue,
+                            ),
+                            const SizedBox(width: 12),
+                            _buildStatCard(
+                              "Sinh viên",
+                              "$sCount",
+                              Icons.school_outlined,
+                              Colors.orange,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // 3. THANH TÌM KIẾM (Search theo mã hoặc tên)
-              TextField(
-                onChanged: (value) {
-                  // Gửi event tìm kiếm vào Bloc
-                  context.read<UserBloc>().add(SearchUserEvent(value));
-                },
-                decoration: InputDecoration(
-                  hintText: "Tìm kiếm mã SV, mã GV hoặc tên...",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                    TextField(
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: "Tìm kiếm mã SV, mã GV hoặc tên...",
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Danh sách tài khoản",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
 
-              // 4. DANH SÁCH TÀI KHOẢN
-              const Text(
-                "Danh sách tài khoản",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-
-              BlocBuilder<UserBloc, UserState>(
-                builder: (context, state) {
-                  if (state is UserLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is UserLoaded) {
-                    if (state.users.isEmpty) {
-                      return const Center(
-                        child: Text("Không tìm thấy người dùng nào"),
-                      );
-                    }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: state.users.length,
-                      itemBuilder: (context, index) {
-                        final user = state.users[index];
-                        return _buildUserAccountCard(context, user);
-                      },
+            // ----------------------------------------------------
+            // PHẦN 2: DANH SÁCH (Được bọc trong SliverList.builder)
+            // ----------------------------------------------------
+            BlocBuilder<UserBloc, UserState>(
+              builder: (context, state) {
+                if (state is UserLoading) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                } else if (state is UserLoaded) {
+                  if (state.users.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            "Không tìm thấy người dùng nào",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
                     );
-                  } else if (state is UserError) {
-                    return Center(
+                  }
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    sliver: SliverList.builder(
+                      itemCount:
+                          state.users.length + (state.isFetchingMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        // 💡 Đang cuộn thì hiện xoay xoay ở thẻ cuối cùng
+                        if (index >= state.users.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        return _buildUserAccountCard(
+                          context,
+                          state.users[index],
+                        );
+                      },
+                    ),
+                  );
+                } else if (state is UserError) {
+                  return SliverToBoxAdapter(
+                    child: Center(
                       child: Text(
                         state.message,
                         style: const TextStyle(color: Colors.red),
                       ),
-                    );
-                  }
-                  return const SizedBox();
-                },
-              ),
-            ],
-          ),
+                    ),
+                  );
+                }
+                return const SliverToBoxAdapter(child: SizedBox());
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Widget Card User [Hiển thị Tên, Chức vụ, Mã, Mật khẩu]
+  // --- Các hàm Widget Card giữ nguyên ---
   Widget _buildUserAccountCard(BuildContext context, user) {
     String idLabel = (user.role == 'STUDENT') ? "Mã SV" : "Mã GV";
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5),
-        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -192,7 +282,6 @@ class AdminDashboardScreen extends StatelessWidget {
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
-                // Hiển thị mật khẩu trực quan
                 Text(
                   "Mật khẩu: ${user.password ?? '123456'}",
                   style: const TextStyle(
@@ -220,7 +309,6 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  // Widget 2 Card thống kê nhỏ gọn
   Widget _buildStatCard(
     String title,
     String count,
@@ -233,6 +321,7 @@ class AdminDashboardScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade200),
         ),
         child: Row(
           children: [
@@ -260,15 +349,12 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  // Dialog xác nhận reset mật khẩu
   void _confirmReset(BuildContext context, user) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Xác nhận reset"),
-        content: Text(
-          "Mật khẩu của ${user.fullName} sẽ được đưa về '123456'. Bạn có chắc chắn?",
-        ),
+        content: Text("Mật khẩu sẽ được đưa về '123456'"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
