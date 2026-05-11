@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/add_council_members/presentation/bloc/tbm_council_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/add_council_members/presentation/screens/tbm_council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/bloc/auto_assignment_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screens/auto_assignment_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
@@ -158,7 +160,10 @@ class _MainWrapperState extends State<MainWrapper> {
             icon: Icon(Icons.groups_outlined),
             label: "Hội đồng",
           ),
-          screen: _buildPlaceholderScreen("Quản lý Hội đồng cơ sở"),
+          screen: BlocProvider(
+            create: (context) => TbmCouncilBloc(),
+            child: const TbmCouncilManagementScreen(),
+          ),
         ),
       );
     }
