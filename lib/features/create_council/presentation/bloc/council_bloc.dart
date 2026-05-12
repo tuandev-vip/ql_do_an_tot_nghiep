@@ -8,13 +8,14 @@ import 'council_state.dart';
 import 'package:flutter/foundation.dart';
 
 class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
-  int _currentPage = 1; // 💡 Trang hiện tại
-  final int _limit = 20; // 💡 Mỗi lần kéo load 20 item
+  int _currentPage = 1;
+  final int _limit = 20;
 
   CouncilBloc() : super(CouncilInitial()) {
-    // LẤY THÔNG TIN
+    // ==========================================
+    // LẤY THÔNG TIN DANH SÁCH
+    // ==========================================
     on<FetchCouncilInfoEvent>((event, emit) async {
-      // 1. Kiểm tra nếu là vuốt Refresh hoặc gọi lại từ đầu thì reset Trang 1
       if (event.isRefresh) {
         _currentPage = 1;
         emit(CouncilLoading());
@@ -22,28 +23,29 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
 
       final currentState = state;
 
-      // 2. Chặn không gọi API nếu đã tải hết sạch dữ liệu từ trước
       if (currentState is CouncilLoaded &&
           currentState.hasReachedMax &&
           !event.isRefresh) {
         return;
       }
 
-      // 3. Hiện vòng quay loading xoay xoay ở đáy màn hình nếu đang tải thêm
       if (currentState is CouncilLoaded && !event.isRefresh) {
         emit(currentState.copyWith(isFetchingMore: true));
       } else if (!event.isRefresh) {
-        emit(CouncilLoading()); // Loading toàn màn hình cho lần đầu
+        emit(CouncilLoading());
       }
 
       try {
         String fakeTime = (TimeManager.now().millisecondsSinceEpoch ~/ 1000)
             .toString();
 
-        // 💡 4. Truyền biến page và limit xuống API PHP
+        // 💡 SỬA LỖI 1: Bắt cờ isSchoolLevel chuyển thành chuỗi
+        String isSchoolStr = event.isSchoolLevel ? 'true' : 'false';
+
+        // 💡 SỬA LỖI 2: Gắn is_school=$isSchoolStr vào URL
         final response = await http.get(
           Uri.parse(
-            "${AppUrls.baseUrl}/api/council/get_council_cs_info.php?fake_time=$fakeTime&page=$_currentPage&limit=$_limit",
+            "${AppUrls.baseUrl}/api/council/get_council_cs_info.php?is_school=$isSchoolStr&fake_time=$fakeTime&page=$_currentPage&limit=$_limit",
           ),
         );
 
@@ -53,21 +55,16 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
             final List<dynamic> newCouncils = data['councils'] ?? [];
 
             if (currentState is CouncilLoaded && !event.isRefresh) {
-              // 💡 5A. NẾU ĐANG CUỘN: Nối thêm 20 thẻ mới vào sau danh sách cũ
               emit(
                 currentState.copyWith(
                   councils: List.of(currentState.councils)..addAll(newCouncils),
-                  hasReachedMax:
-                      newCouncils.length <
-                      _limit, // Ít hơn 20 nghĩa là kịch kim rồi
+                  hasReachedMax: newCouncils.length < _limit,
                   isFetchingMore: false,
                 ),
               );
             } else {
-              // 💡 5B. NẾU LÀ LẦN ĐẦU VÀO APP HOẶC REFRESH: Xây danh sách gốc
               emit(
                 CouncilLoaded(
-                  // 💡 SỬA Ở ĐÂY: Dùng 2 biến thời gian mới tách ra từ API
                   createTimeStatus: data['create_time_status'] ?? "OPEN",
                   assignTimeStatus: data['assign_time_status'] ?? "OPEN",
                   totalStudents: data['total_students'] ?? 0,
@@ -77,8 +74,7 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
                 ),
               );
             }
-
-            _currentPage++; // Tăng trang lên 1 để chuẩn bị cho lần lướt tiếp theo
+            _currentPage++;
           } else {
             emit(CouncilError(data['message'] ?? "Lỗi tải dữ liệu"));
           }
@@ -90,7 +86,9 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
       }
     });
 
-    // TẠO TỰ ĐỘNG
+    // ==========================================
+    // TẠO HỘI ĐỒNG TỰ ĐỘNG
+    // ==========================================
     on<AutoCreateCouncilEvent>((event, emit) async {
       emit(CouncilLoading());
       try {
@@ -113,23 +111,45 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
           final data = await compute(jsonDecode, response.body);
           if (data['status'] == 'success') {
             emit(CouncilActionSuccess(data['message']));
-            // 💡 QUAN TRỌNG: Tạo xong phải có isRefresh: true để tải lại từ trang 1
-            add(FetchCouncilInfoEvent(isRefresh: true));
+            // 💡 SỬA LỖI 3: Gửi kèm isSchoolLevel để nó refresh đúng Tab
+            add(
+              FetchCouncilInfoEvent(
+                isSchoolLevel: event.isSchoolLevel,
+                isRefresh: true,
+              ),
+            );
           } else {
             emit(CouncilError(data['message'] ?? "Lỗi tạo hội đồng"));
-            add(FetchCouncilInfoEvent(isRefresh: true));
+            add(
+              FetchCouncilInfoEvent(
+                isSchoolLevel: event.isSchoolLevel,
+                isRefresh: true,
+              ),
+            );
           }
         } else {
           emit(CouncilError("Lỗi máy chủ: ${response.statusCode}"));
-          add(FetchCouncilInfoEvent(isRefresh: true));
+          add(
+            FetchCouncilInfoEvent(
+              isSchoolLevel: event.isSchoolLevel,
+              isRefresh: true,
+            ),
+          );
         }
       } catch (e) {
         emit(CouncilError("Lỗi hệ thống: $e"));
-        add(FetchCouncilInfoEvent(isRefresh: true));
+        add(
+          FetchCouncilInfoEvent(
+            isSchoolLevel: event.isSchoolLevel,
+            isRefresh: true,
+          ),
+        );
       }
     });
 
-    // PHÂN BỘ MÔN CHO HỘI ĐỒNG TỔNG HỢP
+    // ==========================================
+    // PHÂN BỘ MÔN (Chỉ dành cho Cấp cơ sở)
+    // ==========================================
     on<AssignDepartmentEvent>((event, emit) async {
       emit(CouncilLoading());
       try {
@@ -145,11 +165,11 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
           final data = jsonDecode(response.body);
           if (data['status'] == 'success') {
             emit(CouncilActionSuccess(data['message']));
-            // Phân xong thì tải lại trang 1 cho mới data
-            add(FetchCouncilInfoEvent(isRefresh: true));
+            // Phân xong thì tải lại trang 1
+            add(FetchCouncilInfoEvent(isSchoolLevel: false, isRefresh: true));
           } else {
             emit(CouncilError(data['message'] ?? "Lỗi phân bộ môn"));
-            add(FetchCouncilInfoEvent(isRefresh: true));
+            add(FetchCouncilInfoEvent(isSchoolLevel: false, isRefresh: true));
           }
         } else {
           emit(CouncilError("Lỗi máy chủ: ${response.statusCode}"));
