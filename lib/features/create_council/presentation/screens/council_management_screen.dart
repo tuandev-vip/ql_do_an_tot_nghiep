@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/bloc/council_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/widgets/council_tab_view_card.dart';
+// 💡 Bắt buộc Import file Tab Cấp trường mới
+import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/widgets/council_school_tab_view_card.dart';
 
 class CouncilManagementScreen extends StatefulWidget {
   const CouncilManagementScreen({super.key});
@@ -11,30 +13,23 @@ class CouncilManagementScreen extends StatefulWidget {
       _CouncilManagementScreenState();
 }
 
-// 💡 Thêm SingleTickerProviderStateMixin để quản lý hiệu năng của Tab
 class _CouncilManagementScreenState extends State<CouncilManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late CouncilBloc _councilBloc;
+
   @override
   void initState() {
     super.initState();
-    // 💡 Khởi tạo TabController thủ công, vsync: this giúp nó "ngủ" khi màn hình bị giấu
     _tabController = TabController(length: 2, vsync: this);
     _councilBloc = CouncilBloc();
   }
 
   @override
   void dispose() {
-    _tabController.dispose(); // Hủy để giải phóng RAM khi thoát
+    _tabController.dispose();
     _councilBloc.close();
     super.dispose();
-  }
-
-  void _handleExport(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Tính năng xuất file đang phát triển!")),
-    );
   }
 
   @override
@@ -61,8 +56,7 @@ class _CouncilManagementScreenState extends State<CouncilManagementScreen>
             child: Container(
               color: Colors.white,
               child: TabBar(
-                controller:
-                    _tabController, // 💡 Gắn controller thủ công vào đây
+                controller: _tabController,
                 labelColor: Colors.blueAccent,
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: Colors.blueAccent,
@@ -80,21 +74,13 @@ class _CouncilManagementScreenState extends State<CouncilManagementScreen>
           ),
         ),
         body: TabBarView(
-          controller: _tabController, // 💡 Gắn controller thủ công vào đây
+          controller: _tabController,
           children: const [
-            CouncilTabView(isSchoolLevel: false),
-            CouncilTabView(isSchoolLevel: true),
+            CouncilTabView(isSchoolLevel: false), // 💡 Tab Cơ sở
+            CouncilSchoolTabView(), // 💡 Tab Cấp trường (File mới)
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: "unique_council_btn",
-          onPressed: () => _handleExport(context),
-          backgroundColor: const Color(0xFFBDB76B),
-          label: const Text(
-            "Xuất file",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
+        // 💡 ĐÃ XÓA FLOATING ACTION BUTTON Ở ĐÂY
       ),
     );
   }

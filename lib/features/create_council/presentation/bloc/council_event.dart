@@ -8,7 +8,8 @@ class FetchCouncilInfoEvent extends CouncilEvent {
 
 class AutoCreateCouncilEvent extends CouncilEvent {
   final int capacity; // Chỉ cần sức chứa
-  AutoCreateCouncilEvent(this.capacity);
+  final bool isSchoolLevel;
+  AutoCreateCouncilEvent(this.capacity, this.isSchoolLevel);
 }
 
 class AssignDepartmentEvent extends CouncilEvent {

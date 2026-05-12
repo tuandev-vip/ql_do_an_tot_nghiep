@@ -5,8 +5,12 @@ import '../bloc/council_event.dart';
 
 class CreateCouncilDialog extends StatelessWidget {
   final int totalStudents;
-
-  const CreateCouncilDialog({super.key, required this.totalStudents});
+  final bool isSchoolLevel;
+  const CreateCouncilDialog({
+    super.key,
+    required this.totalStudents,
+    required this.isSchoolLevel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +100,7 @@ class CreateCouncilDialog extends StatelessWidget {
 
                     // Gọi BLoC, chỉ truyền 1 tham số Sức chứa
                     context.read<CouncilBloc>().add(
-                      AutoCreateCouncilEvent(capacity),
+                      AutoCreateCouncilEvent(capacity, isSchoolLevel),
                     );
                     Navigator.pop(context);
                   },

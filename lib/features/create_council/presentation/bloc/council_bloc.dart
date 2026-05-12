@@ -104,6 +104,7 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
           headers: {"Content-Type": "application/json"},
           body: json.encode({
             "capacity": event.capacity,
+            "is_school": event.isSchoolLevel,
             "fake_time": fakeTime,
           }),
         );

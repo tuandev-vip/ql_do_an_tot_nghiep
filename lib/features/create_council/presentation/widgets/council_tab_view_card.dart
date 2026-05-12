@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http; // 💡 Import http
+import 'dart:convert'; // 💡 Import json
+
+import '../../../../core/constants/app_urls.dart';
+// 💡 NHỚ SỬA ĐƯỜNG DẪN EXCEL HELPER NÀY CHO KHỚP VỚI MÁY ÔNG
+import '../../../../core/untils/excel_helper.dart';
+
 import '../bloc/council_bloc.dart';
 import '../bloc/council_event.dart';
 import '../bloc/council_state.dart';
@@ -16,7 +23,6 @@ class CouncilTabView extends StatefulWidget {
   State<CouncilTabView> createState() => _CouncilTabViewState();
 }
 
-// 💡 1. Thêm "with AutomaticKeepAliveClientMixin" vào đây
 class _CouncilTabViewState extends State<CouncilTabView>
     with AutomaticKeepAliveClientMixin {
   String selectedFilter = 'Tất cả';
@@ -29,14 +35,13 @@ class _CouncilTabViewState extends State<CouncilTabView>
 
   final ScrollController _scrollController = ScrollController();
 
-  // 💡 2. Bật cờ KeepAlive để giữ trạng thái Tab không bị load lại
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll); // Lắng nghe ngón tay
+    _scrollController.addListener(_onScroll);
     context.read<CouncilBloc>().add(
       FetchCouncilInfoEvent(
         isSchoolLevel: widget.isSchoolLevel,
@@ -51,9 +56,7 @@ class _CouncilTabViewState extends State<CouncilTabView>
     super.dispose();
   }
 
-  // 💡 Thuật toán kiểm tra chạm đáy
   void _onScroll() {
-    // Nếu vuốt xuống cách đáy 50 pixel -> Bắn lệnh tải thêm
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 50) {
       final state = context.read<CouncilBloc>().state;
@@ -67,9 +70,86 @@ class _CouncilTabViewState extends State<CouncilTabView>
     }
   }
 
+  // 💡 HÀM XUẤT FILE DÀNH RIÊNG CHO CẤP CƠ SỞ
+  Future<void> _exportBaseCouncil() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          "${AppUrls.baseUrl}/api/council/export_admin_council_base.php",
+        ),
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Tắt loading
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          // Gọi hàm xuất Excel
+          bool success = await ExcelHelper.exportAdminBaseCouncilExcel(
+            fileName: "Tong_Hop_Hoi_Dong_Co_So",
+            students: data['students'],
+            councils: data['councils'],
+          );
+
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Lưu file Excel thành công!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Lỗi khi ghi file!"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        } else {
+          // Báo lỗi (VD: Hội đồng HĐCS01 thiếu người)
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text(
+                "Cảnh báo",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Text(data['message']),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Đóng"),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Lỗi kết nối máy chủ!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 💡 3. BẮT BUỘC phải có dòng này ở đầu hàm build để kích hoạt bùa KeepAlive
     super.build(context);
 
     return BlocConsumer<CouncilBloc, CouncilState>(
@@ -94,8 +174,6 @@ class _CouncilTabViewState extends State<CouncilTabView>
 
         int totalSv = 0;
         List<dynamic> councilList = [];
-
-        // 💡 KHAI BÁO 2 BIẾN THỜI GIAN RIÊNG BIỆT
         String createTimeStatus = 'LOCKED';
         String assignTimeStatus = 'LOCKED';
         bool isFetchingMore = false;
@@ -103,7 +181,6 @@ class _CouncilTabViewState extends State<CouncilTabView>
         if (state is CouncilLoaded) {
           totalSv = state.totalStudents;
           councilList = state.councils;
-          // 💡 LẤY DỮ LIỆU TỪ STATE MỚI
           createTimeStatus = state.createTimeStatus;
           assignTimeStatus = state.assignTimeStatus;
           isFetchingMore = state.isFetchingMore;
@@ -130,215 +207,227 @@ class _CouncilTabViewState extends State<CouncilTabView>
           }
         }).toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 💡 NÚT TẠO HỘI ĐỒNG (Dùng biến createTimeStatus)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (createTimeStatus == 'LOCKED') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Chưa qua hạn nhập điểm, không thể tạo hội đồng!",
+        // 💡 BỌC TẤT CẢ VÀO SCAFFOLD ĐỂ DÙNG NÚT NỔI
+        return Scaffold(
+          backgroundColor: Colors.transparent, // Không làm mất màu nền cũ
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (createTimeStatus == 'LOCKED') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Chưa qua hạn nhập điểm, không thể tạo hội đồng!",
+                            ),
                           ),
-                        ),
-                      );
-                    } else if (createTimeStatus == 'OVERDUE') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Đã quá hạn tạo hội đồng!"),
-                        ),
-                      );
-                    } else if (createTimeStatus == 'NO_BATCH') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Hiện tại chưa có đợt đồ án nào!"),
-                        ),
-                      );
-                    } else {
-                      _showCreateDialog(context, totalSv);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: (createTimeStatus == 'OPEN')
-                        ? const Color(0xFF2962FF)
-                        : Colors.grey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                        );
+                      } else if (createTimeStatus == 'OVERDUE') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Đã quá hạn tạo hội đồng!"),
+                          ),
+                        );
+                      } else if (createTimeStatus == 'NO_BATCH') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Hiện tại chưa có đợt đồ án nào!"),
+                          ),
+                        );
+                      } else {
+                        _showCreateDialog(context, totalSv);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: (createTimeStatus == 'OPEN')
+                          ? const Color(0xFF2962FF)
+                          : Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    "Tạo hội đồng tự động",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                    child: const Text(
+                      "Tạo hội đồng tự động",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // 💡 THANH LỌC DẠNG THẺ VUỐT NGANG
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: filterOptions.map((String value) {
-                  final isSelected = selectedFilter == value;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(value),
-                      selected: isSelected,
-                      showCheckmark: false, // Tắt dấu tick cho hiện đại
-                      onSelected: (bool selected) {
-                        if (selected) {
-                          setState(() => selectedFilter = value);
-                        }
-                      },
-                      selectedColor: const Color(0xFF2962FF).withOpacity(0.1),
-                      backgroundColor: Colors.white,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? const Color(0xFF2962FF)
-                            : Colors.black87,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: filterOptions.map((String value) {
+                    final isSelected = selectedFilter == value;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(value),
+                        selected: isSelected,
+                        showCheckmark: false,
+                        onSelected: (bool selected) {
+                          if (selected) {
+                            setState(() => selectedFilter = value);
+                          }
+                        },
+                        selectedColor: const Color(0xFF2962FF).withOpacity(0.1),
+                        backgroundColor: Colors.white,
+                        labelStyle: TextStyle(
                           color: isSelected
                               ? const Color(0xFF2962FF)
-                              : Colors.grey.shade300,
+                              : Colors.black87,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected
+                                ? const Color(0xFF2962FF)
+                                : Colors.grey.shade300,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              Expanded(
+                child: filteredCouncils.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "Không có hội đồng nào phù hợp",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          top: 4,
+                          bottom: 80, // Để chừa khoảng trống cho nút nổi
+                        ),
+                        itemCount:
+                            filteredCouncils.length + (isFetchingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index >= filteredCouncils.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          final council = filteredCouncils[index];
+                          final memberCount =
+                              int.tryParse(
+                                council['member_count'].toString(),
+                              ) ??
+                              0;
+
+                          final bool isAlreadyAssigned =
+                              council['department_code'] != null &&
+                              council['department_code']
+                                  .toString()
+                                  .trim()
+                                  .isNotEmpty;
+
+                          return CouncilCard(
+                            councilName: council['council_name'] ?? 'N/A',
+                            councilCode: council['council_code'] ?? 'N/A',
+                            studentCount:
+                                int.tryParse(
+                                  council['student_count'].toString(),
+                                ) ??
+                                0,
+                            memberCountText: memberCount == 0
+                                ? "Chưa có"
+                                : "$memberCount/3",
+                            councilType: council['council_type'] ?? 'Thường',
+                            topicDirection:
+                                council['topic_direction']?.toString() ??
+                                'Chưa phân loại',
+                            showAssignButton:
+                                council['council_type'] == 'Tổng hợp',
+                            isTimeValid: assignTimeStatus == 'OPEN',
+                            isAssigned: isAlreadyAssigned,
+                            onAssignPressed: () {
+                              if (assignTimeStatus == 'LOCKED') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Chưa qua hạn nhập điểm, không thể phân bộ môn!",
+                                    ),
+                                  ),
+                                );
+                              } else if (assignTimeStatus == 'OVERDUE') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Đã quá hạn phân bộ môn!"),
+                                  ),
+                                );
+                              } else if (assignTimeStatus == 'NO_BATCH') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Hiện tại chưa có đợt đồ án nào!",
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => BlocProvider.value(
+                                    value: context.read<CouncilBloc>(),
+                                    child: AssignDepartmentDialog(
+                                      councilId:
+                                          int.tryParse(
+                                            council['council_id'].toString(),
+                                          ) ??
+                                          0,
+                                      councilCode:
+                                          council['council_code'] ?? 'N/A',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+
+          // 💡 ĐÂY LÀ NÚT XUẤT FILE NẰM TRONG TAB CƠ SỞ (Có HeroTag riêng)
+          floatingActionButton: FloatingActionButton.extended(
+            heroTag: "export_base_btn",
+            onPressed: _exportBaseCouncil,
+            backgroundColor: const Color(0xFFBDB76B),
+            label: const Text(
+              "Xuất file",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-
-            // 💡 DANH SÁCH
-            Expanded(
-              child: filteredCouncils.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Không có hội đồng nào phù hợp",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        top: 4,
-                        bottom: 80,
-                      ),
-                      itemCount:
-                          filteredCouncils.length + (isFetchingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= filteredCouncils.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-
-                        final council = filteredCouncils[index];
-                        final memberCount =
-                            int.tryParse(council['member_count'].toString()) ??
-                            0;
-
-                        // 💡 KIỂM TRA ĐÃ PHÂN BỘ MÔN CHƯA
-                        final bool isAlreadyAssigned =
-                            council['department_code'] != null &&
-                            council['department_code']
-                                .toString()
-                                .trim()
-                                .isNotEmpty;
-
-                        return CouncilCard(
-                          councilName: council['council_name'] ?? 'N/A',
-                          councilCode: council['council_code'] ?? 'N/A',
-                          studentCount:
-                              int.tryParse(
-                                council['student_count'].toString(),
-                              ) ??
-                              0,
-                          memberCountText: memberCount == 0
-                              ? "Chưa có"
-                              : "$memberCount/3",
-                          councilType: council['council_type'] ?? 'Thường',
-                          topicDirection:
-                              council['topic_direction']?.toString() ??
-                              'Chưa phân loại',
-                          showAssignButton:
-                              council['council_type'] == 'Tổng hợp',
-
-                          // 💡 SỬ DỤNG assignTimeStatus CHO NÚT "PHÂN BỘ MÔN"
-                          isTimeValid: assignTimeStatus == 'OPEN',
-
-                          // Khóa nút nếu đã phân rồi
-                          isAssigned: isAlreadyAssigned,
-
-                          onAssignPressed: () {
-                            // 💡 Kiểm tra bằng assignTimeStatus
-                            if (assignTimeStatus == 'LOCKED') {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Chưa qua hạn nhập điểm, không thể phân bộ môn!",
-                                  ),
-                                ),
-                              );
-                            } else if (assignTimeStatus == 'OVERDUE') {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Đã quá hạn phân bộ môn!"),
-                                ),
-                              );
-                            } else if (assignTimeStatus == 'NO_BATCH') {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Hiện tại chưa có đợt đồ án nào!",
-                                  ),
-                                ),
-                              );
-                            } else {
-                              // Đúng hạn (OPEN) thì mới cho mở Popup chia người
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => BlocProvider.value(
-                                  value: context.read<CouncilBloc>(),
-                                  child: AssignDepartmentDialog(
-                                    councilId:
-                                        int.tryParse(
-                                          council['council_id'].toString(),
-                                        ) ??
-                                        0,
-                                    councilCode:
-                                        council['council_code'] ?? 'N/A',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -351,7 +440,10 @@ class _CouncilTabViewState extends State<CouncilTabView>
       context: context,
       builder: (ctx) => BlocProvider.value(
         value: councilBloc,
-        child: CreateCouncilDialog(totalStudents: totalSv),
+        child: CreateCouncilDialog(
+          totalStudents: totalSv,
+          isSchoolLevel: widget.isSchoolLevel,
+        ),
       ),
     );
   }
