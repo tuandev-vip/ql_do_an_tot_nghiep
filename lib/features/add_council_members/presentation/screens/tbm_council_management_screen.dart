@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 💡 Bắt buộc phải có thư viện này
+
 import '../bloc/tbm_council_bloc.dart';
 import '../bloc/tbm_council_event.dart';
 import '../bloc/tbm_council_state.dart';
@@ -18,6 +20,7 @@ class TbmCouncilManagementScreen extends StatefulWidget {
 class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
     with AutomaticKeepAliveClientMixin {
   bool isSchoolLevel = false;
+  String? currentDeptCode;
 
   @override
   bool get wantKeepAlive => true;
@@ -25,14 +28,34 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
   @override
   void initState() {
     super.initState();
-    context.read<TbmCouncilBloc>().add(
-      FetchTbmCouncilsEvent(isSchoolLevel: isSchoolLevel),
-    );
+    _loadUserDeptAndFetch(); // 💡 Chỉ gọi hàm này, xóa cái context.read bị lỗi đi
+  }
+
+  // HÀM LẤY MÃ BỘ MÔN TỪ BỘ NHỚ
+  Future<void> _loadUserDeptAndFetch() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      currentDeptCode = prefs.getString('dept_code') ?? "";
+    });
+
+    if (currentDeptCode!.isNotEmpty) {
+      context.read<TbmCouncilBloc>().add(
+        FetchTbmCouncilsEvent(
+          isSchoolLevel: isSchoolLevel,
+          deptCode: currentDeptCode!,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // 💡 Chờ lấy mã bộ môn xong mới hiện giao diện (để tránh lỗi currentDeptCode bị null)
+    if (currentDeptCode == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
@@ -62,7 +85,10 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                   onTap: () {
                     setState(() => isSchoolLevel = false);
                     context.read<TbmCouncilBloc>().add(
-                      FetchTbmCouncilsEvent(isSchoolLevel: false),
+                      FetchTbmCouncilsEvent(
+                        isSchoolLevel: false,
+                        deptCode: currentDeptCode!, // 💡 Đã truyền deptCode
+                      ),
                     );
                   },
                   child: Container(
@@ -92,7 +118,10 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                   onTap: () {
                     setState(() => isSchoolLevel = true);
                     context.read<TbmCouncilBloc>().add(
-                      FetchTbmCouncilsEvent(isSchoolLevel: true),
+                      FetchTbmCouncilsEvent(
+                        isSchoolLevel: true,
+                        deptCode: currentDeptCode!, // 💡 Đã truyền deptCode
+                      ),
                     );
                   },
                   child: Container(
@@ -151,7 +180,10 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                   return RefreshIndicator(
                     onRefresh: () async {
                       context.read<TbmCouncilBloc>().add(
-                        FetchTbmCouncilsEvent(isSchoolLevel: isSchoolLevel),
+                        FetchTbmCouncilsEvent(
+                          isSchoolLevel: isSchoolLevel,
+                          deptCode: currentDeptCode!, // 💡 Đã truyền deptCode
+                        ),
                       );
                       await Future.delayed(const Duration(milliseconds: 500));
                     },
@@ -204,14 +236,13 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BlocProvider(
-                                  // 💡 Truyền BLoC tải chi tiết sinh viên vào màn này
                                   create: (context) => TbmCouncilDetailBloc(),
                                   child: TbmCouncilDetailScreen(
                                     councilId:
                                         int.tryParse(
                                           council['council_id'].toString(),
                                         ) ??
-                                        0, // Bắt buộc có ID
+                                        0,
                                     councilCode:
                                         council['council_code'] ?? 'N/A',
                                     councilName:

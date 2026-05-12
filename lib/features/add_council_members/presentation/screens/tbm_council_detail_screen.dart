@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/add_council_members/presentation/widgets/tbm_lecturer_picker_sheet_card.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 💡 Import SharedPreferences
+
 import '../bloc/tbm_council_detail_bloc.dart';
 import '../bloc/tbm_council_detail_event.dart';
 import '../bloc/tbm_council_detail_state.dart';
-import '../widgets/tbm_student_card.dart'; // 💡 Đã import Thẻ Sinh Viên
+import '../widgets/tbm_student_card.dart';
+
+// 💡 Import 2 file mới của Bottom Sheet chọn Giảng Viên
+import '../bloc/tbm_lecturer_picker_bloc.dart';
 
 class TbmCouncilDetailScreen extends StatefulWidget {
   final int councilId;
@@ -26,24 +32,6 @@ class TbmCouncilDetailScreen extends StatefulWidget {
 class _TbmCouncilDetailScreenState extends State<TbmCouncilDetailScreen> {
   late List<String?> assignedLecturers;
   final ScrollController _scrollController = ScrollController();
-
-  // Mock data giảng viên
-  final List<Map<String, String>> mockLecturers = [
-    {
-      "name": "Nguyễn Văn A",
-      "email": "DTC25250225@ictu.edu.vn",
-      "id": "GV01",
-      "dept": "Mạng máy tính",
-      "count": "2",
-    },
-    {
-      "name": "Trần Thị B",
-      "email": "DTC25250226@ictu.edu.vn",
-      "id": "GV02",
-      "dept": "Mạng máy tính",
-      "count": "1",
-    },
-  ];
 
   @override
   void initState() {
@@ -77,157 +65,42 @@ class _TbmCouncilDetailScreenState extends State<TbmCouncilDetailScreen> {
     super.dispose();
   }
 
-  // 💡 HÀM MỞ POPUP CHỌN GIẢNG VIÊN
-  void _showLecturerPicker(int slotIndex) {
-    showModalBottomSheet(
+  // 💡 HÀM MỚI: MỞ POPUP CHỌN GIẢNG VIÊN (SỬ DỤNG BLOC)
+  Future<void> _showLecturerPicker(int slotIndex) async {
+    // 1. Lấy mã bộ môn của TBM đang đăng nhập từ thiết bị
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String myDeptCode = prefs.getString('dept_code') ?? "";
+
+    if (myDeptCode.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Lỗi: Không tìm thấy mã bộ môn!")),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    // 2. Mở Bottom Sheet và chờ kết quả người dùng chọn
+    final selectedLecturer = await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.orange.shade200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 18,
-                          color: Colors.black,
-                        ),
-                        onPressed: () => Navigator.pop(ctx),
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Tìm kiếm GVHD",
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: mockLecturers.length,
-                  itemBuilder: (context, index) {
-                    final gv = mockLecturers[index];
-                    return GestureDetector(
-                      onTap: () {
-                        setState(
-                          () => assignedLecturers[slotIndex] = gv["name"],
-                        );
-                        Navigator.pop(ctx);
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade400),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              gv["name"]!,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow("Email", gv["email"]!),
-                            const SizedBox(height: 4),
-                            _buildInfoRow("Mã giảng viên", gv["id"]!),
-                            const SizedBox(height: 4),
-                            _buildInfoRow("Bộ môn", gv["dept"]!),
-                            const SizedBox(height: 4),
-                            _buildInfoRow(
-                              "Số lượng hội đồng tham gia",
-                              gv["count"]!,
-                              isBold: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2962FF),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    "Lưu",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        return BlocProvider(
+          create: (context) => TbmLecturerPickerBloc(),
+          child: TbmLecturerPickerSheet(deptCode: myDeptCode),
         );
       },
     );
-  }
 
-  Widget _buildInfoRow(String label, String value, {bool isBold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
+    // 3. Nếu người dùng có chọn GV và bấm Lưu
+    if (selectedLecturer != null) {
+      setState(() {
+        // Cập nhật tên GV vào ô (Sau này làm tính năng API Lưu HĐ thì nhớ lấy selectedLecturer['user_id'] nữa nhé)
+        assignedLecturers[slotIndex] = selectedLecturer['name'];
+      });
+    }
   }
 
   @override
@@ -321,7 +194,9 @@ class _TbmCouncilDetailScreenState extends State<TbmCouncilDetailScreen> {
                                 SizedBox(
                                   height: 32,
                                   child: OutlinedButton(
-                                    onPressed: () => _showLecturerPicker(index),
+                                    onPressed: () => _showLecturerPicker(
+                                      index,
+                                    ), // 💡 Gọi hàm mở popup mới
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(
                                         color: Colors.grey,

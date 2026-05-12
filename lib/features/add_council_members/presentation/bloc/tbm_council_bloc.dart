@@ -17,7 +17,7 @@ class TbmCouncilBloc extends Bloc<TbmCouncilEvent, TbmCouncilState> {
         String fakeTime = (TimeManager.now().millisecondsSinceEpoch ~/ 1000)
             .toString();
 
-        String myDeptCode = "CNPM";
+        String myDeptCode = event.deptCode;
         String isSchool = event.isSchoolLevel ? 'true' : 'false';
 
         // 💡 3. NHÉT FAKE_TIME VÀO URL GỌI API
