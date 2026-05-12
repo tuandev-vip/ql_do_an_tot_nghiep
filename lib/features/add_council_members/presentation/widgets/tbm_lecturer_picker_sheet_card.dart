@@ -17,13 +17,14 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
   final ScrollController _scrollController = ScrollController();
   Map<String, dynamic>? _selectedLecturer;
 
-  // 💡 1. THÊM BIẾN LƯU TỪ KHÓA TÌM KIẾM
+  // Biến lưu từ khóa tìm kiếm
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // 💡 Gọi Event tải Giảng Viên thật từ API
     context.read<TbmLecturerPickerBloc>().add(
       FetchLecturersEvent(widget.deptCode, isRefresh: true),
     );
@@ -32,7 +33,6 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 50) {
         final state = context.read<TbmLecturerPickerBloc>().state;
-        // 💡 Chỉ load thêm khi KHÔNG GÕ TÌM KIẾM (để tránh lỗi danh sách khi đang lọc)
         if (state is PickerLoaded &&
             !state.hasReachedMax &&
             !state.isFetchingMore &&
@@ -48,7 +48,7 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _searchController.dispose(); // 💡 Nhớ dọn dẹp bộ nhớ
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -83,7 +83,7 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
       ),
       child: Column(
         children: [
-          // Header
+          // Header có thanh tìm kiếm
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -102,18 +102,16 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  // 💡 2. CẬP NHẬT THANH TÌM KIẾM
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value) {
                       setState(() {
-                        _searchQuery = value; // Cập nhật từ khóa mỗi khi gõ
+                        _searchQuery = value;
                       });
                     },
                     decoration: InputDecoration(
                       hintText: "Tìm kiếm tên GVHD...",
                       prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                      // Nút X để xóa nhanh từ khóa
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear, color: Colors.grey),
@@ -137,7 +135,7 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
             ),
           ),
 
-          // Danh sách Giảng viên
+          // 💡 DANH SÁCH GIẢNG VIÊN THẬT TỪ DATABASE
           Expanded(
             child: BlocBuilder<TbmLecturerPickerBloc, TbmLecturerPickerState>(
               builder: (context, state) {
@@ -151,13 +149,12 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
                     ),
                   );
                 } else if (state is PickerLoaded) {
-                  // 💡 3. LOGIC LỌC DANH SÁCH THEO TÊN
+                  // Lọc theo từ khóa tìm kiếm
                   final filteredLecturers = state.lecturers.where((gv) {
                     final name = gv['name']?.toString().toLowerCase() ?? "";
                     return name.contains(_searchQuery.toLowerCase());
                   }).toList();
 
-                  // Nếu gõ tìm mà không ra ai
                   if (filteredLecturers.isEmpty) {
                     return Center(
                       child: Text(
@@ -175,7 +172,6 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    // 💡 Dùng danh sách đã lọc (filteredLecturers) thay vì danh sách gốc
                     itemCount:
                         filteredLecturers.length +
                         (state.isFetchingMore && _searchQuery.isEmpty ? 1 : 0),
@@ -188,6 +184,7 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
                       }
 
                       final gv = filteredLecturers[index];
+                      // 💡 Kiểm tra Object gv['user_id'] để hightlight
                       bool isSelected =
                           _selectedLecturer != null &&
                           _selectedLecturer!['user_id'] == gv['user_id'];
@@ -231,9 +228,10 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
                               _buildInfoRow(
                                 "Hội đồng tham gia",
                                 gv["count"].toString(),
+                                isBold: true,
                                 color: int.parse(gv["count"].toString()) >= 3
                                     ? Colors.red
-                                    : Colors.black,
+                                    : const Color(0xFF2962FF),
                               ),
                             ],
                           ),
@@ -254,7 +252,10 @@ class _TbmLecturerPickerSheetState extends State<TbmLecturerPickerSheet> {
             child: ElevatedButton(
               onPressed: _selectedLecturer == null
                   ? null
-                  : () => Navigator.pop(context, _selectedLecturer),
+                  : () => Navigator.pop(
+                      context,
+                      _selectedLecturer,
+                    ), // Trả Object Giảng Viên về
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2962FF),
                 disabledBackgroundColor: Colors.grey,

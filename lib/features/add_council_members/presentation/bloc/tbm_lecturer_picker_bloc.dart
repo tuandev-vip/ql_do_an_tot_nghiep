@@ -20,8 +20,10 @@ class TbmLecturerPickerBloc
       final currentState = state;
       if (currentState is PickerLoaded &&
           currentState.hasReachedMax &&
-          !event.isRefresh)
+          !event.isRefresh) {
         return;
+      }
+
       if (currentState is PickerLoaded && !event.isRefresh)
         emit(currentState.copyWith(isFetchingMore: true));
 

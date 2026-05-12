@@ -39,6 +39,7 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
     });
 
     if (currentDeptCode!.isNotEmpty) {
+      if (!mounted) return;
       context.read<TbmCouncilBloc>().add(
         FetchTbmCouncilsEvent(
           isSchoolLevel: isSchoolLevel,
@@ -211,7 +212,8 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                               council['topic_direction']?.toString() ??
                               'Chưa xác định',
                           isTimeValid: state.assignTimeStatus == 'OPEN',
-                          onProposePressed: () {
+                          onProposePressed: () async {
+                            // 💡 Đã thêm chữ async vào đây
                             if (state.assignTimeStatus == 'LOCKED') {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -232,7 +234,7 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                               return;
                             }
 
-                            Navigator.push(
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BlocProvider(
@@ -256,6 +258,16 @@ class _TbmCouncilManagementScreenState extends State<TbmCouncilManagementScreen>
                                 ),
                               ),
                             );
+                            if (context.mounted &&
+                                currentDeptCode != null &&
+                                currentDeptCode!.isNotEmpty) {
+                              context.read<TbmCouncilBloc>().add(
+                                FetchTbmCouncilsEvent(
+                                  isSchoolLevel: isSchoolLevel,
+                                  deptCode: currentDeptCode!,
+                                ),
+                              );
+                            }
                           },
                         );
                       },

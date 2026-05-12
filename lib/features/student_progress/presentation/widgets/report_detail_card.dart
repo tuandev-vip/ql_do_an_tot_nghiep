@@ -193,6 +193,7 @@ class ReportDetailCard extends StatelessWidget {
         );
 
         // 1. CHỐT CHẶN 1: Bắt buộc phải tắt Dialog bằng rootNavigator trước khi làm việc khác
+
         Navigator.of(context, rootNavigator: true).pop();
 
         // 2. Hiện thông báo thành công và Load lại data

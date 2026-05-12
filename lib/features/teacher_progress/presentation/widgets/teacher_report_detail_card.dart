@@ -77,6 +77,7 @@ class _TeacherReportDetailCardState extends State<TeacherReportDetailCard> {
       );
 
       if (!context.mounted) return;
+      if (!mounted) return;
       Navigator.pop(context); // Tắt Loading
 
       // Thông báo thành công
