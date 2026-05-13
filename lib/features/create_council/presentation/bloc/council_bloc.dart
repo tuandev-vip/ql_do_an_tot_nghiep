@@ -166,10 +166,20 @@ class CouncilBloc extends Bloc<CouncilEvent, CouncilState> {
           if (data['status'] == 'success') {
             emit(CouncilActionSuccess(data['message']));
             // Phân xong thì tải lại trang 1
-            add(FetchCouncilInfoEvent(isSchoolLevel: false, isRefresh: true));
+            add(
+              FetchCouncilInfoEvent(
+                isSchoolLevel: event.isSchoolLevel,
+                isRefresh: true,
+              ),
+            );
           } else {
             emit(CouncilError(data['message'] ?? "Lỗi phân bộ môn"));
-            add(FetchCouncilInfoEvent(isSchoolLevel: false, isRefresh: true));
+            add(
+              FetchCouncilInfoEvent(
+                isSchoolLevel: event.isSchoolLevel,
+                isRefresh: true,
+              ),
+            );
           }
         } else {
           emit(CouncilError("Lỗi máy chủ: ${response.statusCode}"));

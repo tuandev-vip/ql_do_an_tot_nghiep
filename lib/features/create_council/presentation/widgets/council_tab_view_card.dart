@@ -403,6 +403,7 @@ class _CouncilTabViewState extends State<CouncilTabView>
                                           0,
                                       councilCode:
                                           council['council_code'] ?? 'N/A',
+                                      isSchoolLevel: widget.isSchoolLevel,
                                     ),
                                   ),
                                 );

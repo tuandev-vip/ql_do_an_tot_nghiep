@@ -415,6 +415,7 @@ class _CouncilSchoolTabViewState extends State<CouncilSchoolTabView>
                                             0,
                                         councilCode:
                                             council['council_code'] ?? 'N/A',
+                                        isSchoolLevel: true,
                                       ),
                                     ),
                                   );

@@ -7,11 +7,13 @@ import '../bloc/council_event.dart';
 class AssignDepartmentDialog extends StatefulWidget {
   final int councilId;
   final String councilCode;
+  final bool isSchoolLevel;
 
   const AssignDepartmentDialog({
     super.key,
     required this.councilId,
     required this.councilCode,
+    required this.isSchoolLevel,
   });
 
   @override
@@ -130,7 +132,11 @@ class _AssignDepartmentDialogState extends State<AssignDepartmentDialog> {
                   ); // Ví dụ: {"CNPM":2,"MATTT":1}
 
                   context.read<CouncilBloc>().add(
-                    AssignDepartmentEvent(widget.councilId, jsonString),
+                    AssignDepartmentEvent(
+                      widget.councilId,
+                      jsonString,
+                      widget.isSchoolLevel,
+                    ),
                   );
                   Navigator.pop(context);
                 }

@@ -15,5 +15,10 @@ class AutoCreateCouncilEvent extends CouncilEvent {
 class AssignDepartmentEvent extends CouncilEvent {
   final int councilId;
   final String departmentData; // Lưu chuỗi JSON: {"CNPM":2, "MATTT":1}
-  AssignDepartmentEvent(this.councilId, this.departmentData);
+  final bool isSchoolLevel;
+  AssignDepartmentEvent(
+    this.councilId,
+    this.departmentData,
+    this.isSchoolLevel,
+  );
 }
