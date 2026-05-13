@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
-import '../../../user/presentation/bloc/user_state.dart';
-import '../../../batch/presentation/bloc/batch_bloc.dart';
-import '../../../batch/presentation/bloc/batch_state.dart';
+import '../../../../user/presentation/bloc/user_state.dart';
+import '../../../../batch/presentation/bloc/batch_bloc.dart';
+import '../../../../batch/presentation/bloc/batch_state.dart';
 import '../widgets/test_mode_card.dart';
 
 class AdminDashboardScreen extends StatefulWidget {

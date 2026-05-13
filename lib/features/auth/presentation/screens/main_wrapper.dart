@@ -6,7 +6,8 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/bloc/a
 import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screens/auto_assignment_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
-import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/details_council/student/presentation/screens/student_council_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/details_council/teacher/presentation/screens/teacher_council_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
@@ -61,7 +62,9 @@ class _MainWrapperState extends State<MainWrapper> {
         homeScreen = _buildPlaceholderScreen("Dashboard Trưởng bộ môn");
         break;
       case 'TEACHER':
-        homeScreen = _buildPlaceholderScreen("Dashboard Giảng viên");
+        homeScreen = TeacherDashboardScreen(
+          teacherId: int.tryParse(widget.userData.id.toString()) ?? 0,
+        );
         break;
       case 'STUDENT':
         homeScreen = _buildPlaceholderScreen("Dashboard Sinh viên");

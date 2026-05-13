@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
-import '../../../../core/untils/time_manager.dart';
-import '../../../batch/data/models/batch_model.dart';
+import '../../../../../core/untils/time_manager.dart';
+import '../../../../batch/data/models/batch_model.dart';
 
 class TestModeCard extends StatefulWidget {
   final BatchModel? activeBatch;
