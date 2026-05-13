@@ -1,11 +1,11 @@
 import 'package:excel/excel.dart';
 import 'package:file_saver/file_saver.dart';
 import 'dart:typed_data';
-import 'dart:io'; // 💡 Bắt buộc có để can thiệp thư mục Android
+import 'dart:io';
 
 class ExcelHelper {
   // =========================================================================
-  // 1. HÀM XUẤT FILE CHO TRƯỞNG BỘ MÔN (Hàm gốc của ông)
+  // 1. HÀM XUẤT FILE CHO TRƯỞNG BỘ MÔN
   // =========================================================================
   static Future<bool> exportToExcel({
     required String fileName,
@@ -80,7 +80,6 @@ class ExcelHelper {
         rowIndex++;
       }
 
-      // 💡 LOGIC LƯU FILE ÉP BUỘC CHO ANDROID
       List<int>? fileBytes = excel.encode();
       if (fileBytes != null) {
         Uint8List bytes = Uint8List.fromList(fileBytes);
@@ -109,7 +108,7 @@ class ExcelHelper {
   }
 
   // =========================================================================
-  // 2. HÀM XUẤT EXCEL 2 BẢNG CHO TRƯỞNG KHOA (CẤP CƠ SỞ)
+  // 2. HÀM XUẤT EXCEL CHO TRƯỞNG KHOA (CẤP CƠ SỞ) - 1 SHEET (DÙNG MERGE)
   // =========================================================================
   static Future<bool> exportAdminBaseCouncilExcel({
     required String fileName,
@@ -135,18 +134,19 @@ class ExcelHelper {
         bold: true,
         horizontalAlign: HorizontalAlign.Center,
         verticalAlign: VerticalAlign.Center,
-        backgroundColorHex: ExcelColor.fromHexString("#D3D3D3"), // Xám
+        backgroundColorHex: ExcelColor.fromHexString("#D3D3D3"),
       );
       var centerStyle = CellStyle(
         horizontalAlign: HorizontalAlign.Center,
         verticalAlign: VerticalAlign.Center,
       );
-      var wrapStyle = CellStyle(
+      var leftWrapStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Left,
         verticalAlign: VerticalAlign.Center,
         textWrapping: TextWrapping.WrapText,
       );
 
-      // BẢNG 1: SINH VIÊN
+      // --- VẼ BẢNG 1: SINH VIÊN ---
       List<String> svHeaders = [
         "STT",
         "Mã Hội Đồng",
@@ -216,13 +216,25 @@ class ExcelHelper {
             centerStyle;
         sheetObject
                 .cell(
+                  CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: i + 1),
+                )
+                .cellStyle =
+            leftWrapStyle;
+        sheetObject
+                .cell(
                   CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: i + 1),
                 )
                 .cellStyle =
             centerStyle;
+        sheetObject
+                .cell(
+                  CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: i + 1),
+                )
+                .cellStyle =
+            leftWrapStyle;
       }
 
-      // BẢNG 2: HỘI ĐỒNG
+      // --- VẼ BẢNG 2: HỘI ĐỒNG (CỘT 7 VÀ CỘT 8) ---
       List<String> hdHeaders = ["Mã Hội Đồng", "Thành viên"];
       for (int i = 0; i < hdHeaders.length; i++) {
         var cell = sheetObject.cell(
@@ -232,22 +244,51 @@ class ExcelHelper {
         cell.cellStyle = headerStyle;
       }
 
+      int currentRow = 1; // 💡 Biến đếm dòng riền cho Bảng 2
       for (int i = 0; i < councils.length; i++) {
         var hd = councils[i];
+        String memberList = hd['members'] ?? '';
+
+        // Cắt danh sách thành viên ra thành mảng (mỗi người 1 dòng)
+        List<String> members = memberList.isNotEmpty
+            ? memberList.split('\n')
+            : ["Chưa có"];
+        int numRows = members.length;
+
+        // 1. Viết Mã Hội Đồng và GỘP Ô (Merge)
         var cellCode = sheetObject.cell(
-          CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: i + 1),
+          CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: currentRow),
         );
         cellCode.value = TextCellValue(hd['council_code'] ?? '');
         cellCode.cellStyle = centerStyle;
 
-        var cellMem = sheetObject.cell(
-          CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: i + 1),
-        );
-        cellMem.value = TextCellValue(hd['members'] ?? '');
-        cellMem.cellStyle = wrapStyle;
+        if (numRows > 1) {
+          sheetObject.merge(
+            CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: currentRow),
+            CellIndex.indexByColumnRow(
+              columnIndex: 7,
+              rowIndex: currentRow + numRows - 1,
+            ),
+          );
+        }
+
+        // 2. Viết từng thành viên vào từng ô riêng biệt ở cột 8
+        for (int m = 0; m < numRows; m++) {
+          var cellMem = sheetObject.cell(
+            CellIndex.indexByColumnRow(
+              columnIndex: 8,
+              rowIndex: currentRow + m,
+            ),
+          );
+          cellMem.value = TextCellValue(members[m].trim());
+          cellMem.cellStyle = leftWrapStyle;
+        }
+
+        currentRow +=
+            numRows; // Nhảy xuống block dòng tiếp theo cho Hội đồng sau
       }
 
-      // 💡 LOGIC LƯU FILE ÉP BUỘC CHO ANDROID
+      // LƯU FILE
       List<int>? fileBytes = excel.encode();
       if (fileBytes != null) {
         Uint8List bytes = Uint8List.fromList(fileBytes);
@@ -276,7 +317,7 @@ class ExcelHelper {
   }
 
   // =========================================================================
-  // 3. HÀM MỚI: XUẤT EXCEL 2 BẢNG CHO TRƯỞNG KHOA (CẤP TRƯỜNG)
+  // 3. HÀM XUẤT EXCEL CHO TRƯỞNG KHOA (CẤP TRƯỜNG) - 1 SHEET (DÙNG MERGE)
   // =========================================================================
   static Future<bool> exportAdminSchoolCouncilExcel({
     required String fileName,
@@ -309,12 +350,13 @@ class ExcelHelper {
         horizontalAlign: HorizontalAlign.Center,
         verticalAlign: VerticalAlign.Center,
       );
-      var wrapStyle = CellStyle(
+      var leftWrapStyle = CellStyle(
+        horizontalAlign: HorizontalAlign.Left,
         verticalAlign: VerticalAlign.Center,
         textWrapping: TextWrapping.WrapText,
       );
 
-      // BẢNG 1: SINH VIÊN
+      // --- VẼ BẢNG 1: SINH VIÊN ---
       List<String> svHeaders = [
         "STT",
         "Mã Hội Đồng",
@@ -384,13 +426,25 @@ class ExcelHelper {
             centerStyle;
         sheetObject
                 .cell(
+                  CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: i + 1),
+                )
+                .cellStyle =
+            leftWrapStyle;
+        sheetObject
+                .cell(
                   CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: i + 1),
                 )
                 .cellStyle =
             centerStyle;
+        sheetObject
+                .cell(
+                  CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: i + 1),
+                )
+                .cellStyle =
+            leftWrapStyle;
       }
 
-      // BẢNG 2: HỘI ĐỒNG
+      // --- VẼ BẢNG 2: HỘI ĐỒNG (CỘT 7 VÀ CỘT 8) ---
       List<String> hdHeaders = ["Mã Hội Đồng", "Thành viên"];
       for (int i = 0; i < hdHeaders.length; i++) {
         var cell = sheetObject.cell(
@@ -400,22 +454,50 @@ class ExcelHelper {
         cell.cellStyle = headerStyle;
       }
 
+      int currentRow = 1; // 💡 Biến đếm dòng riền cho Bảng 2
       for (int i = 0; i < councils.length; i++) {
         var hd = councils[i];
+        String memberList = hd['members'] ?? '';
+
+        // Cắt danh sách thành viên ra thành mảng
+        List<String> members = memberList.isNotEmpty
+            ? memberList.split('\n')
+            : ["Chưa có"];
+        int numRows = members.length;
+
+        // 1. Viết Mã Hội Đồng và GỘP Ô (Merge)
         var cellCode = sheetObject.cell(
-          CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: i + 1),
+          CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: currentRow),
         );
         cellCode.value = TextCellValue(hd['council_code'] ?? '');
         cellCode.cellStyle = centerStyle;
 
-        var cellMem = sheetObject.cell(
-          CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: i + 1),
-        );
-        cellMem.value = TextCellValue(hd['members'] ?? '');
-        cellMem.cellStyle = wrapStyle;
+        if (numRows > 1) {
+          sheetObject.merge(
+            CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: currentRow),
+            CellIndex.indexByColumnRow(
+              columnIndex: 7,
+              rowIndex: currentRow + numRows - 1,
+            ),
+          );
+        }
+
+        // 2. Viết từng thành viên vào từng ô riêng biệt ở cột 8
+        for (int m = 0; m < numRows; m++) {
+          var cellMem = sheetObject.cell(
+            CellIndex.indexByColumnRow(
+              columnIndex: 8,
+              rowIndex: currentRow + m,
+            ),
+          );
+          cellMem.value = TextCellValue(members[m].trim());
+          cellMem.cellStyle = leftWrapStyle;
+        }
+
+        currentRow += numRows; // Nhảy xuống block dòng tiếp theo
       }
 
-      // 💡 LOGIC LƯU FILE ÉP BUỘC CHO ANDROID
+      // LƯU FILE
       List<int>? fileBytes = excel.encode();
       if (fileBytes != null) {
         Uint8List bytes = Uint8List.fromList(fileBytes);

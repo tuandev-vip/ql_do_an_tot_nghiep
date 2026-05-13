@@ -101,7 +101,7 @@ class _CouncilTabViewState extends State<CouncilTabView>
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Lưu file Excel thành công!"),
+                content: Text("Đã lưu file vào thư mục download!"),
                 backgroundColor: Colors.green,
               ),
             );

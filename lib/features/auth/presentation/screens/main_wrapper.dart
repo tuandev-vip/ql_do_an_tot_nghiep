@@ -188,16 +188,6 @@ class _MainWrapperState extends State<MainWrapper> {
           screen: const CouncilManagementScreen(),
         ),
       );
-
-      configs.add(
-        _NavConfig(
-          item: const BottomNavigationBarItem(
-            icon: Icon(Icons.analytics_outlined),
-            label: "Thống kê",
-          ),
-          screen: _buildPlaceholderScreen("Thống kê toàn khoa"),
-        ),
-      );
     }
 
     // 6. TAB CÁ NHÂN (Luôn có cho tất cả mọi người)

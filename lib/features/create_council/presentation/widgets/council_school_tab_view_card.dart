@@ -91,7 +91,7 @@ class _CouncilSchoolTabViewState extends State<CouncilSchoolTabView>
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text("Lưu file Excel Cấp trường thành công!"),
+                content: Text("Đã lưu file vào thư mục download!"),
                 backgroundColor: Colors.green,
               ),
             );
@@ -370,7 +370,7 @@ class _CouncilSchoolTabViewState extends State<CouncilSchoolTabView>
                                   0,
                               memberCountText: memberCount == 0
                                   ? "Chưa có"
-                                  : "$memberCount/5", // Giả sử HĐ Trường có 5 người
+                                  : "$memberCount/3",
                               councilType: council['council_type'] ?? 'Thường',
                               topicDirection:
                                   council['topic_direction']?.toString() ??
