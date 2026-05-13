@@ -24,9 +24,9 @@ class TbmLecturerPickerBloc
         return;
       }
 
-      if (currentState is PickerLoaded && !event.isRefresh)
+      if (currentState is PickerLoaded && !event.isRefresh) {
         emit(currentState.copyWith(isFetchingMore: true));
-
+      }
       try {
         final response = await http.get(
           Uri.parse(

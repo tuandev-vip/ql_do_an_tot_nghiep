@@ -60,9 +60,9 @@ class _StudentCouncilTabViewState extends State<StudentCouncilTabView>
     super.build(context);
     return BlocBuilder<StudentCouncilBloc, StudentCouncilState>(
       builder: (context, state) {
-        if (state is StudentCouncilLoading)
+        if (state is StudentCouncilLoading) {
           return const Center(child: CircularProgressIndicator());
-
+        }
         if (state is StudentCouncilError) {
           return Center(
             child: Text(
@@ -101,12 +101,13 @@ class _StudentCouncilTabViewState extends State<StudentCouncilTabView>
                   2 +
                   (state.isFetchingMore ? 1 : 0), // +2 cho Header và Tiêu đề DS
               itemBuilder: (context, index) {
-                if (index == 0)
+                if (index == 0) {
                   return _buildCouncilHeader(
                     info['council_code'],
                     info['members'],
                   );
-                if (index == 1)
+                }
+                if (index == 1) {
                   return const Padding(
                     padding: EdgeInsets.only(top: 16, bottom: 8),
                     child: Text(
@@ -117,6 +118,7 @@ class _StudentCouncilTabViewState extends State<StudentCouncilTabView>
                       ),
                     ),
                   );
+                }
 
                 final studentIndex = index - 2;
                 if (studentIndex >= students.length) {

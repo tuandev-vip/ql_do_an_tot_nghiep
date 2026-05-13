@@ -8,6 +8,7 @@ import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_ma
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/details_council/student/presentation/screens/student_council_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/details_council/teacher/presentation/screens/teacher_council_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
@@ -140,10 +141,12 @@ class _MainWrapperState extends State<MainWrapper> {
       configs.add(
         _NavConfig(
           item: const BottomNavigationBarItem(
-            icon: Icon(Icons.folder_shared_outlined),
+            icon: Icon(Icons.groups_outlined),
             label: "Hội đồng",
           ),
-          screen: _buildPlaceholderScreen("Hội đồng"),
+          screen: TeacherCouncilScreen(
+            teacherId: int.tryParse(widget.userData.id.toString()) ?? 0,
+          ),
         ),
       );
     }

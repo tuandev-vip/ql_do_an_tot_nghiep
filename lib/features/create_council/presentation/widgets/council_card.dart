@@ -28,8 +28,9 @@ class CouncilCard extends StatelessWidget {
 
   // Hàm cắt cúp chuỗi hướng đề tài
   String _formatTopicDirection(String direction) {
-    if (direction.isEmpty || direction == "Chưa phân loại")
+    if (direction.isEmpty || direction == "Chưa phân loại") {
       return "Chưa xác định";
+    }
 
     if (direction == "Tổng hợp nhiều hướng") return "Hỗn hợp nhiều hướng";
 
