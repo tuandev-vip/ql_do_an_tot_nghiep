@@ -7,6 +7,7 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screen
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/details_council/student/presentation/screens/student_council_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/screens/advisor_requests_screen.dart';
@@ -98,6 +99,17 @@ class _MainWrapperState extends State<MainWrapper> {
           screen: StudentProgressScreen(
             studentId: widget.userData.id,
             studentName: widget.user.fullName,
+          ),
+        ),
+      );
+      configs.add(
+        _NavConfig(
+          item: const BottomNavigationBarItem(
+            icon: Icon(Icons.groups_outlined), // Icon nhiều người
+            label: "Hội đồng",
+          ),
+          screen: StudentCouncilScreen(
+            currentStudentId: int.tryParse(widget.userData.id.toString()) ?? 0,
           ),
         ),
       );

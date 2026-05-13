@@ -273,10 +273,11 @@ class _StudentCouncilTabViewState extends State<StudentCouncilTabView>
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              textAlign: isTopic ? TextAlign.left : TextAlign.right,
+              textAlign: TextAlign.right,
               style: TextStyle(
                 fontWeight: isTopic ? FontWeight.w500 : FontWeight.normal,
                 fontSize: 13,
