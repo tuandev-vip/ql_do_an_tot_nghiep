@@ -8,7 +8,6 @@ import '../../../work_progress/presentation/bloc/project_outline_bloc.dart';
 // Import các Tab và Card của Giảng viên & Sinh viên
 import '../widgets/teacher_report_tab.dart';
 import '../../../work_progress/presentation/widgets/outline_tab_content.dart';
-import '../../../work_progress/presentation/widgets/student_header_card.dart'; // 💡 Gọi lại Card hiển thị thông tin ở đây
 import '../bloc/teacher_grade_bloc.dart';
 import '../widgets/teacher_grade_tab.dart';
 
@@ -53,8 +52,12 @@ class _TeacherProgressScreenState extends State<TeacherProgressScreen> {
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
         title: Text(
-          "Tiến độ :    $studentName",
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          "Sinh viên: $studentName",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF2962FF),
@@ -63,10 +66,6 @@ class _TeacherProgressScreenState extends State<TeacherProgressScreen> {
       body: Column(
         children: [
           // 1. GỌI CARD THÔNG TIN SINH VIÊN (Tên, Mã SV, Đề tài...)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: StudentHeaderCard(student: widget.studentData),
-          ),
 
           // 2. THANH MENU CHUYỂN 3 TAB
           Container(

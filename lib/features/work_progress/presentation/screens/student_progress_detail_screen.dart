@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/work_progress/presentation/bloc/project_outline_bloc.dart';
-import '../widgets/student_header_card.dart';
+// 💡 Đã xóa import student_header_card.dart ở đây
 import '../widgets/outline_tab_content.dart';
 
 class StudentProgressDetailScreen extends StatefulWidget {
@@ -45,11 +45,9 @@ class _StudentProgressDetailScreenState
               _buildCustomTabBar(),
               const SizedBox(height: 16),
 
-              // 2. CARD THÔNG TIN SINH VIÊN (Import từ file khác)
-              StudentHeaderCard(student: widget.student),
-              const SizedBox(height: 16),
+              // 💡 ĐÃ CẮT BỎ CÁI CARD THÔNG TIN SINH VIÊN Ở ĐÂY ĐỂ TRỐNG CHỖ CỰC RỘNG RÃI
 
-              // 3. NỘI DUNG TỪNG TAB
+              // 2. NỘI DUNG TỪNG TAB
               if (selectedTab == 0)
                 const Center(child: Text("Giao diện Duyệt tiến độ (Làm sau)"))
               else
@@ -57,15 +55,9 @@ class _StudentProgressDetailScreenState
                   create: (context) => ProjectOutlineBloc(),
                   child: OutlineTabContent(
                     studentId: widget.student['student_id'],
-                    onTopicUpdated: (newTopicName) {
-                      // Cập nhật lại Map dữ liệu của sinh viên hiện tại
-                      // Lệnh setState sẽ ép cái HeaderCard phải vẽ lại ngay lập tức
-                      setState(() {
-                        widget.student['topic'] = newTopicName;
-                      });
-                    },
-                  ), // Truyền ID sinh viên vào đây
-                ), // Gọi Content của Tab Đề cương từ file khác
+                    // 💡 Đã xóa cái callback onTopicUpdated vì thẻ Header bị xóa rồi, không cần cập nhật UI ngoài này nữa
+                  ),
+                ),
             ],
           ),
         ),
@@ -73,7 +65,7 @@ class _StudentProgressDetailScreenState
     );
   }
 
-  // Thanh Custom Tab Bar tui để lại đây vì nó điều khiển State 'selectedTab' của màn hình chính
+  // Thanh Custom Tab Bar
   Widget _buildCustomTabBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

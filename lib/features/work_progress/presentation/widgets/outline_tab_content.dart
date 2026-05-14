@@ -153,195 +153,202 @@ class _OutlineTabContentState extends State<OutlineTabContent> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isEditing) ...[
-                _buildEditField(
-                  "Hướng đề tài",
-                  "Nhập hướng đề tài",
-                  _directionController,
-                ),
-                const SizedBox(height: 16),
-                _buildEditField(
-                  "Tên đề tài",
-                  "Nhập tên đề tài",
-                  _topicNameController,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Đề cương",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _pickFile,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blueAccent, width: 1),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            selectedFileName ?? "Nhấn để tải tệp lên (PDF/Doc)",
-                            style: TextStyle(
-                              color: selectedFileName != null
-                                  ? Colors.black87
-                                  : Colors.grey.shade500,
-                              fontWeight: selectedFileName != null
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Icon(
-                          Icons.drive_folder_upload,
-                          color: Colors.blueAccent,
-                        ),
-                      ],
-                    ),
+          // 💡 ĐÃ BỌC SINGLE CHIL SCROLL VIEW Ở ĐÂY CHO ÔNG RỒI NHÉ
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isEditing) ...[
+                  _buildEditField(
+                    "Hướng đề tài",
+                    "Nhập hướng đề tài",
+                    _directionController,
                   ),
-                ),
-              ] else ...[
-                _buildViewField("Hướng đề tài", direction),
-                const SizedBox(height: 16),
-                _buildViewField("Tên đề tài", topicName),
-                const SizedBox(height: 16),
-                const Text(
-                  "Đề cương",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                if (fileName == null)
+                  const SizedBox(height: 16),
+                  _buildEditField(
+                    "Tên đề tài",
+                    "Nhập tên đề tài",
+                    _topicNameController,
+                  ),
+                  const SizedBox(height: 16),
                   const Text(
-                    "Chưa có",
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.black87,
-                    ),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.picture_as_pdf,
-                          color: Colors.redAccent,
-                          size: 30,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fileName!.split('/').last,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                    "Đề cương",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _pickFile,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blueAccent, width: 1),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedFileName ??
+                                  "Nhấn để tải tệp lên (PDF/Doc)",
+                              style: TextStyle(
+                                color: selectedFileName != null
+                                    ? Colors.black87
+                                    : Colors.grey.shade500,
+                                fontWeight: selectedFileName != null
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
-                            ],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                          const Icon(
+                            Icons.drive_folder_upload,
+                            color: Colors.blueAccent,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-              ],
-              const SizedBox(height: 24),
-
-              // DÒNG TEXT CẢNH BÁO MÀU ĐỎ KHI HẾT HẠN
-              if (isOverdue)
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      "⏳ Đã hết hạn cập nhật đề cương!",
+                ] else ...[
+                  _buildViewField("Hướng đề tài", direction),
+                  const SizedBox(height: 16),
+                  _buildViewField("Tên đề tài", topicName),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Đề cương",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  if (fileName == null)
+                    const Text(
+                      "Chưa có",
                       style: TextStyle(
-                        color: Colors.red,
                         fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.picture_as_pdf,
+                            color: Colors.redAccent,
+                            size: 30,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fileName!.split('/').last,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 24),
+
+                // DÒNG TEXT CẢNH BÁO MÀU ĐỎ KHI HẾT HẠN
+                if (isOverdue)
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        "⏳ Đã hết hạn cập nhật đề cương!",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-              // NÚT CHUYỂN ĐỔI: SỬA HOẶC LƯU
-              Align(
-                alignment: Alignment.centerRight,
-                child: state is OutlineUpdating
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        // NẾU QUÁ HẠN -> KHÓA NÚT (TRẢ VỀ NULL)
-                        onPressed: isOverdue
-                            ? null
-                            : () {
-                                if (isEditing) {
-                                  context.read<ProjectOutlineBloc>().add(
-                                    UpdateProjectOutline(
-                                      studentId: widget.studentId,
-                                      topicDirection: _directionController.text,
-                                      topicName: _topicNameController.text,
-                                      filePath: selectedFilePath,
-                                      fileBytes: selectedFileBytes,
-                                      fileName: selectedFileName,
-                                    ),
-                                  );
-                                } else {
-                                  setState(() {
-                                    _directionController.text = direction ?? "";
-                                    _topicNameController.text = topicName ?? "";
-                                    selectedFilePath = null;
-                                    selectedFileBytes = null;
-                                    selectedFileName = null;
-                                    isEditing = true;
-                                  });
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          // ĐỔI MÀU NỀN THEO TRẠNG THÁI KHÓA/MỞ
-                          backgroundColor: isOverdue
-                              ? Colors.grey.shade400
-                              : const Color(0xFF2962FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                // NÚT CHUYỂN ĐỔI: SỬA HOẶC LƯU
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: state is OutlineUpdating
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          // NẾU QUÁ HẠN -> KHÓA NÚT (TRẢ VỀ NULL)
+                          onPressed: isOverdue
+                              ? null
+                              : () {
+                                  if (isEditing) {
+                                    context.read<ProjectOutlineBloc>().add(
+                                      UpdateProjectOutline(
+                                        studentId: widget.studentId,
+                                        topicDirection:
+                                            _directionController.text,
+                                        topicName: _topicNameController.text,
+                                        filePath: selectedFilePath,
+                                        fileBytes: selectedFileBytes,
+                                        fileName: selectedFileName,
+                                      ),
+                                    );
+                                  } else {
+                                    setState(() {
+                                      _directionController.text =
+                                          direction ?? "";
+                                      _topicNameController.text =
+                                          topicName ?? "";
+                                      selectedFilePath = null;
+                                      selectedFileBytes = null;
+                                      selectedFileName = null;
+                                      isEditing = true;
+                                    });
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            // ĐỔI MÀU NỀN THEO TRẠNG THÁI KHÓA/MỞ
+                            backgroundColor: isOverdue
+                                ? Colors.grey.shade400
+                                : const Color(0xFF2962FF),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            disabledBackgroundColor: Colors.grey.shade300,
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                          child: Text(
+                            isEditing ? "Lưu" : "Cập nhật",
+                            style: TextStyle(
+                              // ĐỔI MÀU CHỮ
+                              color: isOverdue
+                                  ? Colors.grey.shade600
+                                  : Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          disabledBackgroundColor: Colors.grey.shade300,
                         ),
-                        child: Text(
-                          isEditing ? "Lưu" : "Cập nhật",
-                          style: TextStyle(
-                            // ĐỔI MÀU CHỮ
-                            color: isOverdue
-                                ? Colors.grey.shade600
-                                : Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },
