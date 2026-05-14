@@ -7,6 +7,8 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screen
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/screens/tbm_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/details_council/student/presentation/screens/student_council_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/details_council/teacher/presentation/screens/teacher_council_screen.dart';
@@ -59,7 +61,14 @@ class _MainWrapperState extends State<MainWrapper> {
         homeScreen = const AdminDashboardScreen();
         break;
       case 'TBM':
-        homeScreen = _buildPlaceholderScreen("Dashboard Trưởng bộ môn");
+        final String userDept = widget.user.deptId ?? "CNTT";
+        // 💡 BỌC BLOC VÀO ĐÂY ĐỂ TRUYỀN DATA XUỐNG MÀN HÌNH DASHBOARD
+        homeScreen = BlocProvider(
+          key:
+              UniqueKey(), // Chuyển bùa UniqueKey ra ngoài này để ép cả BLoC load lại khi ấn tab
+          create: (context) => TbmDashboardBloc(),
+          child: TbmDashboardScreen(departmentId: userDept),
+        );
         break;
       case 'TEACHER':
         homeScreen = TeacherDashboardScreen(
