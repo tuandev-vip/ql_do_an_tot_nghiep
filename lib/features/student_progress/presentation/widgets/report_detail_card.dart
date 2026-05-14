@@ -47,7 +47,8 @@ class ReportDetailCard extends StatelessWidget {
             const _EmptyState(text: "Báo cáo tuần này chưa được mở.")
           else if (status == "OPEN") ...[
             const _EmptyState(
-              text: "Bạn chưa nộp báo cáo cho tuần này.",
+              text:
+                  "Bạn chưa nộp báo cáo cho tuần này.\n          Vui lòng chỉ up file doc",
               isItalic: true,
             ),
             _buildUploadButton(context, isUpdate: false),

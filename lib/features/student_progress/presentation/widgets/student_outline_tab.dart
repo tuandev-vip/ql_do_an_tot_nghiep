@@ -37,6 +37,34 @@ class _StudentOutlineTabState extends State<StudentOutlineTab> {
 
         // Trạng thái lỗi[cite: 9]
         if (state is OutlineError) {
+          final msg = state.message.toLowerCase();
+
+          // 💡 Xử lý lỗi trống dữ liệu y như bên Tab Báo cáo
+          if (msg.contains("đình chỉ") ||
+              msg.contains("không tìm thấy") ||
+              msg.contains("chưa đăng ký") ||
+              msg.contains("không có đợt") ||
+              msg.contains("no_batch")) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.folder_off_outlined,
+                    size: 80,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Chưa có đợt đồ án nào được mở.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return Center(
             child: Text(
               state.message,

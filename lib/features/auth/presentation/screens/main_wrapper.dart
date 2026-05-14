@@ -63,6 +63,7 @@ class _MainWrapperState extends State<MainWrapper> {
         break;
       case 'TEACHER':
         homeScreen = TeacherDashboardScreen(
+          key: UniqueKey(),
           teacherId: int.tryParse(widget.userData.id.toString()) ?? 0,
         );
         break;
@@ -136,6 +137,7 @@ class _MainWrapperState extends State<MainWrapper> {
             label: "QL đồ án",
           ),
           screen: BlocProvider(
+            key: UniqueKey(),
             create: (context) => ProjectEvaluationBloc(),
             child: ProjectEvaluationScreen(teacherId: widget.userData.id),
           ),
@@ -234,18 +236,23 @@ class _MainWrapperState extends State<MainWrapper> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          // 1. Cập nhật index để chuyển màn hình như bình thường
-          setState(() => _currentIndex = index);
+          // 1. Cập nhật index để chuyển màn hình
+          setState(() {
+            _currentIndex = index;
 
-          //  2. KIỂM TRA NẾU LÀ GIẢNG VIÊN VÀ NHẤN VÀO TAB KIỂM DUYỆT
-          if (widget.user.role == 'TEACHER') {
-            if (index == 1) {
-              // Ép RegistrationBloc chạy lại lệnh lấy danh sách mới nhất
-              context.read<RegistrationBloc>().add(
-                FetchAdvisorStudentsEvent(widget.userData.id),
-              );
+            // 💡 TUYỆT CHIÊU TÀ ĐẠO: Ép khởi tạo lại các Tab của Giảng viên
+            if (widget.user.role == 'TEACHER') {
+              // Gọi lại hàm này sẽ sinh ra các UniqueKey mới -> Flutter tự động load lại API
+              _navConfigs = _buildNavigation();
+
+              // Riêng tab Kiểm duyệt (index == 1) anh em mình dùng Bloc đang ngon thì cứ giữ nguyên
+              if (index == 1) {
+                context.read<RegistrationBloc>().add(
+                  FetchAdvisorStudentsEvent(widget.userData.id),
+                );
+              }
             }
-          }
+          });
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF2196F3),

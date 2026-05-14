@@ -5,7 +5,6 @@ import '../bloc/registration_event.dart';
 import '../bloc/registration_state.dart';
 import '../widgets/teacher_card.dart';
 import '../../../user/data/models/teacher_model.dart';
-// ĐỪNG QUÊN IMPORT MÀN HÌNH NÀY NẾU NÓ BÁO ĐỎ NHÉ
 import '../widgets/registration_expired_view.dart';
 
 class AdvisorRegistrationScreen extends StatefulWidget {
@@ -55,13 +54,18 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
               FetchTeachersEvent(widget.studentId),
             );
           } else if (state is RegistrationError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            // 💡 SỬA LỖI 1 Ở ĐÂY: Nếu lỗi là "Không có đợt" thì KHÔNG HIỆN SNACKBAR để tránh đè sang Tab khác
+            final msg = state.message.toLowerCase();
+            if (!msg.contains("không có đợt") &&
+                !msg.contains("hiện tại không có")) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           }
         },
         child: BlocBuilder<RegistrationBloc, RegistrationState>(
@@ -70,7 +74,6 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // 1. HỨNG DỮ LIỆU TỪ TẤT CẢ CÁC TRẠNG THÁI (KỂ CẢ EXPIRED)
             List<TeacherModel> teachers = [];
             if (state is TeachersLoaded) {
               teachers = state.teachers;
@@ -79,23 +82,44 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
             } else if (state is RegistrationError) {
               teachers = state.teachers;
             } else if (state is RegistrationExpired) {
-              teachers = state
-                  .teachers; // <--- ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT ÔNG BỊ THIẾU NÈ!
+              teachers = state.teachers;
             }
 
-            // 2. KIỂM TRA ƯU TIÊN TUYỆT ĐỐI: Có thầy nào đã duyệt (APPROVED) chưa?
+            // KIỂM TRA ƯU TIÊN TUYỆT ĐỐI: Có thầy nào đã duyệt (APPROVED) chưa?
             final approvedTeacher = teachers.cast<TeacherModel?>().firstWhere(
               (t) =>
                   t?.myRegistrationStatus?.trim().toUpperCase() == 'APPROVED',
               orElse: () => null,
             );
 
-            // 3. NẾU ĐÃ ĐƯỢC DUYỆT: Kệ quá hạn hay không, cứ trùm full màn hình tick xanh!
             if (approvedTeacher != null) {
               return _buildAlreadyHasAdvisorView(approvedTeacher);
             }
 
-            // 4. NẾU CHƯA CÓ GVHD MÀ LẠI BỊ QUÁ HẠN: Hiện cái đồng hồ đỏ
+            // 💡 SỬA LỖI 2 Ở ĐÂY: Hiển thị dòng chữ ra giữa màn hình thay vì văng SnackBar
+            if (state is RegistrationError) {
+              final msg = state.message.toLowerCase();
+              if (msg.contains("không có đợt") ||
+                  msg.contains("hiện tại không có")) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            }
+
             if (state is RegistrationExpired) {
               return RegistrationExpiredView(
                 batchName: state.batchName,
@@ -103,7 +127,6 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
               );
             }
 
-            // 5. NẾU VẪN CÒN HẠN VÀ CHƯA CÓ GVHD: Hiện thanh tìm kiếm bình thường
             return Column(
               children: [
                 _buildSearchField(context),

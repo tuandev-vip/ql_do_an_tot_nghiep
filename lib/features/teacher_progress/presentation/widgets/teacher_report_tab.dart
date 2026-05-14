@@ -38,34 +38,63 @@ class _TeacherReportTabState extends State<TeacherReportTab> {
         }
 
         if (state is ReportError) {
-          if (state.message.contains("NO_BATCH")) {
-            return const Center(
-              child: Text(
-                "Sinh viên này chưa có đợt đồ án nào đang diễn ra.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
+          final msg = state.message.toLowerCase();
+
+          // 💡 1. TRƯỜNG HỢP CHƯA CÓ ĐỀ CƯƠNG (Phổ biến nhất khi mới duyệt SV)
+          if (msg.contains("no_outline") ||
+              msg.contains("chưa cập nhật đề cương")) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.note_add_outlined,
+                    size: 70,
+                    color: Colors.orange.shade300,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Vui lòng cập nhật đề cương cho sinh viên này để xem tiến độ!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             );
-          } else if (state.message.contains("NO_OUTLINE")) {
-            return const Center(
-              child: Text(
-                "Vui lòng cập nhật đề cương bên Tab Đề Cương để xem tiến độ.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
+          }
+          // 💡 2. TRƯỜNG HỢP SINH VIÊN CHƯA NỘP GÌ (Dữ liệu trống)
+          else if (msg.contains("không tìm thấy") ||
+              msg.contains("chưa nộp") ||
+              msg.contains("đình chỉ")) {
+            // Lưu ý: Chỗ này mình chặn luôn cái chữ "đình chỉ" ảo do PHP trả về sai
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Vui lòng cập nhật đề cương cho sinh viên này để xem tiến độ!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
               ),
             );
           }
 
+          // 3. CÁC LỖI KHÁC (Lỗi mạng, server sập...) thì hiện màu đỏ để mình còn biết mà sửa
           return Center(
-            child: Text(
-              state.message,
-              style: const TextStyle(color: Colors.red),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                "Lỗi hệ thống: ${state.message}",
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
             ),
           );
         }

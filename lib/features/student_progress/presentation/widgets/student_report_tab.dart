@@ -58,23 +58,38 @@ class _StudentReportTabState extends State<StudentReportTab> {
         }
 
         if (state is ReportError) {
-          // 💡 Nếu là lỗi STOPPED thì ẩn luôn UI đi (vì đằng nào cũng bị đá văng ở listener rồi)
-          if (state.message.contains("STOPPED")) {
+          final msg = state.message.toLowerCase();
+
+          // 💡 Nếu là lỗi STOPPED thật thì ẩn luôn UI đi (vì đã bị đá văng sang màn hình đình chỉ ở listener rồi)
+          if (msg.contains("stopped")) {
             return const SizedBox();
           }
 
-          if (state.message.contains("NO_BATCH")) {
-            return const Center(
-              child: Text(
-                "Hiện tại chưa có đợt đồ án nào đang diễn ra.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
+          // 💡 NẾU CHƯA CÓ ĐỢT HOẶC CHƯA ĐĂNG KÝ (Bắt luôn cái lỗi hiển thị "bị đình chỉ" ảo)
+          if (msg.contains("no_batch") ||
+              msg.contains("không có đợt") ||
+              msg.contains("đình chỉ") ||
+              msg.contains("không tìm thấy") ||
+              msg.contains("chưa đăng ký")) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.assignment_late_outlined,
+                    size: 80,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Hiện tại chưa có đợt đồ án nào được mở.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
               ),
             );
-          } else if (state.message.contains("NO_OUTLINE")) {
+          } else if (msg.contains("no_outline")) {
             return const Center(
               child: Text(
                 "Chưa được báo cáo do giảng viên chưa cập nhật đề cương.",
@@ -87,7 +102,7 @@ class _StudentReportTabState extends State<StudentReportTab> {
             );
           }
 
-          // Lỗi mạng hoặc lỗi khác thì hiện màu đỏ như cũ
+          // Các lỗi khác thì hiện màu đỏ
           return Center(
             child: Text(
               state.message,
