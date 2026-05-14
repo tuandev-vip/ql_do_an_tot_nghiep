@@ -10,7 +10,7 @@ import 'user_state.dart';
 class UserBloc extends Bloc<UserEvent, UserState> {
   List<UserDataModel> _allUsers = [];
   int _currentPage = 1;
-  final int _limit = 20;
+  final int _limit = 5;
   String _currentSearchQuery = '';
 
   UserBloc() : super(UserInitial()) {
