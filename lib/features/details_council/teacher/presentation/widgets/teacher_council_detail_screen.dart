@@ -70,6 +70,7 @@ class _TeacherCouncilDetailScreenState
           ),
           centerTitle: true,
           backgroundColor: Colors.blueAccent,
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: BlocBuilder<TeacherCouncilDetailBloc, TeacherCouncilDetailState>(
           builder: (context, state) {

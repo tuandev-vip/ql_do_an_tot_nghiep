@@ -155,6 +155,7 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () {
           if (isAILoading) return;
           setState(() {

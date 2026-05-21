@@ -60,18 +60,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
-        title: const Center(
-          child: Text(
-            "ICTU",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 30,
-              color: Colors.white,
-            ),
+        centerTitle: true, // Bật cái này lên để tự động căn giữa chữ tuyệt đối
+        title: const Text(
+          "ICTU",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 30,
+            color: Colors.white,
           ),
         ),
         backgroundColor: Colors.blueAccent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.notifications, // Icon cái chuông
+              color: Colors.white,
+              size: 28, // Chỉnh nhẹ size cho cân đối với chữ ICTU
+            ),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: BlocListener<UserBloc, UserState>(
         listener: (context, state) {

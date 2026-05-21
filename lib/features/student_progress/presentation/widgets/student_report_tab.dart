@@ -82,7 +82,7 @@ class _StudentReportTabState extends State<StudentReportTab> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "Hiện tại chưa có đợt đồ án nào được mở.",
+                    "Hiện tại chưa được báo cáo.",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),

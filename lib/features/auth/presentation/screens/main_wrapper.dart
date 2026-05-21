@@ -134,7 +134,7 @@ class _MainWrapperState extends State<MainWrapper> {
         _NavConfig(
           item: const BottomNavigationBarItem(
             icon: Icon(Icons.fact_check_outlined),
-            label: "Kiểm duyệt",
+            label: "Sinh viên",
           ),
           screen: AdvisorRequestsScreen(teacherId: widget.userData.id),
         ),
@@ -143,7 +143,7 @@ class _MainWrapperState extends State<MainWrapper> {
         _NavConfig(
           item: const BottomNavigationBarItem(
             icon: Icon(Icons.folder_shared_outlined),
-            label: "QL đồ án",
+            label: "Tiến độ",
           ),
           screen: BlocProvider(
             key: UniqueKey(),

@@ -32,7 +32,11 @@ class _AdvisorRegistrationScreenState extends State<AdvisorRegistrationScreen> {
       appBar: AppBar(
         title: const Text(
           "ĐĂNG KÝ GIẢNG VIÊN & ĐỀ TÀI",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFF5F7F9),
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,

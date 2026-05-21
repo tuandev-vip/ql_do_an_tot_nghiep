@@ -182,6 +182,7 @@ class _AutoAssignmentScreenState extends State<AutoAssignmentScreen> {
 
             // NẾU CÓ ĐỢT -> HIỆN NÚT BÌNH THƯỜNG
             return FloatingActionButton.extended(
+              heroTag: null,
               onPressed: () async {
                 // 1. Kiểm tra phải đang ở Tab "Tất cả" mới cho xuất
                 if (_selectedFilter != 'all') {

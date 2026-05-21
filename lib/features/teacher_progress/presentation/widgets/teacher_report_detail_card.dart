@@ -260,7 +260,7 @@ class _TeacherReportDetailCardState extends State<TeacherReportDetailCard> {
                   size: 18,
                 ),
                 label: const Text(
-                  "Duyệt & Gửi nhận xét",
+                  "Gửi nhận xét",
                   style: TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
