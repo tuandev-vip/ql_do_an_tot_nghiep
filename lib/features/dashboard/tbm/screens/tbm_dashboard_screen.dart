@@ -4,6 +4,8 @@ import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_state.dart';
+import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/screens/notification_screen.dart';
 
 class TbmDashboardScreen extends StatefulWidget {
   final String departmentId;
@@ -40,6 +42,70 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
         centerTitle: true,
         backgroundColor: const Color(0xFF2196F3),
         elevation: 0,
+        // 💡 ĐÃ BỌC BLOCBUILDER Ở ĐÂY ĐỂ FIX LỖI "UNDEFINED NAME STATE"
+        actions: [
+          BlocBuilder<TbmDashboardBloc, TbmDashboardState>(
+            builder: (context, state) {
+              bool unread = false;
+              // Kiểm tra xem state đã load xong chưa và có biến hasUnread không
+              if (state is TbmDashboardLoaded) {
+                unread = state.hasUnread;
+              }
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () async {
+                      // Gọi sang màn hình thông báo và chờ nó quay lại
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider(
+                            create: (context) => NotificationBloc(),
+                            child: NotificationScreen(
+                              userId: widget.departmentId,
+                              role: "TRUONG_BO_MON",
+                            ),
+                          ),
+                        ),
+                      );
+                      // Quay lại thì tự động refresh Dashboard để mất chấm đỏ
+                      if (context.mounted) {
+                        context.read<TbmDashboardBloc>().add(
+                          LoadTbmDashboardStats(widget.departmentId),
+                        );
+                      }
+                    },
+                  ),
+                  // CHẤM ĐỎ THÔNG MINH
+                  if (unread)
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 10,
+                          minHeight: 10,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: BlocBuilder<TbmDashboardBloc, TbmDashboardState>(
         builder: (context, state) {
@@ -131,7 +197,7 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
           if (state is TbmDashboardLoaded) {
             isLoading = state.isAILoading;
 
-            // 💡 LOGIC CHẶN NÚT (Dùng compareTo cho chắc cốp)
+            // LOGIC CHẶN NÚT AI
             if (state.hasBatch &&
                 state.outlineDeadline != null &&
                 state.reportW10Deadline != null) {
@@ -140,7 +206,7 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
               // Nếu Giờ Máy >= Hạn Đề Cương VÀ Giờ Máy <= Hạn Cuối W10
               if (now.compareTo(state.outlineDeadline!) >= 0 &&
                   now.compareTo(state.reportW10Deadline!) <= 0) {
-                isDisabled = false; // Mở khóa xanh rờn!
+                isDisabled = false;
               }
             }
 
@@ -155,7 +221,7 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
                     context.read<TbmDashboardBloc>().add(
                       GenerateAIStatsEvent(
                         deptId: widget.departmentId,
-                        weekNum: 1, // Để 1, sang kia PHP tự tính
+                        weekNum: 1,
                       ),
                     );
                   },

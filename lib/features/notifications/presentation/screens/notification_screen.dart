@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http; // 💡 Đã import thư viện HTTP
+import 'package:ql_do_an_tot_nghiep/core/constants/app_urls.dart'; // 💡 Đã import BaseUrl
 import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 import 'package:ql_do_an_tot_nghiep/features/notifications/data/model/notification_model.dart';
 import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/bloc/notification_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/bloc/notification_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/bloc/notification_state.dart';
-// 💡 NHỚ IMPORT FILE TimeManager CỦA ÔNG VÀO ĐÂY
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
@@ -25,10 +26,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    // Vừa vào màn hình là gọi API lấy thông báo liền
+    // 1. Vừa vào màn hình là gọi API lấy thông báo liền
     context.read<NotificationBloc>().add(
       LoadNotifications(userId: widget.userId, role: widget.role),
     );
+
+    // 💡 2. Gọi hàm âm thầm đánh dấu "Đã đọc" trong DB
+    _markAsRead();
+  }
+
+  // 💡 HÀM BẮN API XÓA CHẤM ĐỎ (UPDATE is_read = 1)
+  Future<void> _markAsRead() async {
+    try {
+      final url = Uri.parse(
+        "${AppUrls.baseUrl}/api/notifications/mark_read.php",
+      );
+      await http.post(url, body: {'user_id': widget.userId});
+      debugPrint("Đã đánh dấu toàn bộ thông báo là 'Đã đọc'");
+    } catch (e) {
+      debugPrint("Lỗi đánh dấu đã đọc: $e");
+    }
   }
 
   @override
@@ -99,7 +116,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildNotificationList(List<AppNotification> notifications) {
-    // 💡 Lấy mốc thời gian Fake để chia danh sách
+    // Lấy mốc thời gian Fake để chia danh sách
     DateTime currentFakeTime = TimeManager.now();
 
     List<AppNotification> todayList = [];
@@ -140,7 +157,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildNotificationCard(AppNotification noti) {
-    // 💡 BẮT MÀU VÀ ICON THEO TYPE TỪ DATABASE
+    // BẮT MÀU VÀ ICON THEO TYPE TỪ DATABASE
     Color iconColor = Colors.blue;
     Color bgColor = Colors.blue.withOpacity(0.1);
     IconData iconShape = Icons.notifications_none_rounded;
@@ -159,9 +176,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       iconColor = Colors.green;
       bgColor = Colors.green.withOpacity(0.1);
       iconShape = Icons.check_circle_outline;
-      borderColor = Colors.green.withOpacity(
-        0.3,
-      ); // Giống viền thẻ "GV đã duyệt" trong Figma
+      borderColor = Colors.green.withOpacity(0.3);
     }
 
     return Container(
@@ -227,7 +242,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  // 💡 HÀM TÍNH THỜI GIAN "X giờ trước" DỰA VÀO FAKE TIME
+  // HÀM TÍNH THỜI GIAN "X giờ trước" DỰA VÀO FAKE TIME
   String _getTimeAgo(DateTime createdAt) {
     Duration diff = TimeManager.now().difference(createdAt);
     if (diff.inDays > 0) return "${diff.inDays} ngày trước";

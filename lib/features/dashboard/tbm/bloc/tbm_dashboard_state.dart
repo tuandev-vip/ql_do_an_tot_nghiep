@@ -19,6 +19,8 @@ class TbmDashboardLoaded extends TbmDashboardState {
   final String? aiSummary;
   final String? aiError;
 
+  final bool hasUnread;
+
   TbmDashboardLoaded({
     required this.totalStudents,
     required this.totalTeachers,
@@ -30,6 +32,7 @@ class TbmDashboardLoaded extends TbmDashboardState {
     this.isAILoading = false,
     this.aiSummary,
     this.aiError,
+    this.hasUnread = false,
   });
 
   TbmDashboardLoaded copyWith({
@@ -43,6 +46,7 @@ class TbmDashboardLoaded extends TbmDashboardState {
     bool? isAILoading,
     String? aiSummary,
     String? aiError,
+    bool? hasUnread,
   }) {
     return TbmDashboardLoaded(
       totalStudents: totalStudents ?? this.totalStudents,
@@ -55,6 +59,7 @@ class TbmDashboardLoaded extends TbmDashboardState {
       isAILoading: isAILoading ?? this.isAILoading,
       aiSummary: aiSummary ?? this.aiSummary,
       aiError: aiError,
+      hasUnread: hasUnread ?? this.hasUnread,
     );
   }
 }

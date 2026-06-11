@@ -18,15 +18,26 @@ class TbmDashboardBloc extends Bloc<TbmDashboardEvent, TbmDashboardState> {
   ) async {
     emit(TbmDashboardLoading());
     try {
-      final url = Uri.parse(
+      // 1. URL Gọi thống kê Dashboard
+      final urlStats = Uri.parse(
         "${AppUrls.baseUrl}/api/department_head/get_tbm_stats.php?dept_id=${event.deptId}",
       );
-      final response = await http.get(url);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      // 💡 2. URL Gọi ngầm Thông báo (Để Server tính Giờ Fake và ĐẺ ra thông báo nếu đến hạn)
+      String currentTimeStr = TimeManager.now().toString().split('.').first;
+      String encodedTime = Uri.encodeComponent(currentTimeStr);
+      final urlNoti = Uri.parse(
+        "${AppUrls.baseUrl}/api/notifications/get_notifications.php?user_id=${event.deptId}&role=TRUONG_BO_MON&client_time=$encodedTime",
+      );
+
+      // Gọi API thống kê trước
+      final responseStats = await http.get(urlStats);
+      // Gọi ngầm API Thông báo ngay sau đó
+      final responseNoti = await http.get(urlNoti);
+
+      if (responseStats.statusCode == 200) {
+        final data = jsonDecode(responseStats.body);
         if (data['status'] == 'success') {
-          // 💡 PHẢI CÓ ĐOẠN NÀY ĐỂ BỐC NGÀY THÁNG TỪ PHP NẠP VÀO FLUTTER
           DateTime? parsedOutline;
           DateTime? parsedW10;
 
@@ -41,6 +52,16 @@ class TbmDashboardBloc extends Bloc<TbmDashboardEvent, TbmDashboardState> {
             );
           }
 
+          // 💡 3. LẤY BIẾN CHẤM ĐỎ TỪ CÁI API THÔNG BÁO (Vì nó vừa mới update DB xong)
+          bool unreadStatus = false;
+          if (responseNoti.statusCode == 200) {
+            final dataNoti = jsonDecode(responseNoti.body);
+            if (dataNoti['status'] == 'success') {
+              unreadStatus =
+                  dataNoti['has_unread'] == true || dataNoti['has_unread'] == 1;
+            }
+          }
+
           emit(
             TbmDashboardLoaded(
               totalStudents:
@@ -52,16 +73,20 @@ class TbmDashboardBloc extends Bloc<TbmDashboardEvent, TbmDashboardState> {
               missingMembers:
                   int.tryParse(data['data']['missing_members'].toString()) ?? 0,
               hasBatch: data['data']['has_batch'] ?? false,
-              // 💡 GÁN 2 BIẾN NÀY VÀO STATE THÌ UI MỚI NHẬN ĐƯỢC GIỜ ĐỂ MỞ KHÓA NÚT
               outlineDeadline: parsedOutline,
               reportW10Deadline: parsedW10,
+
+              // 💡 GÁN VÀO ĐÂY LÀ CHẤM ĐỎ LÊN NGAY TỨC KHẮC
+              hasUnread: unreadStatus,
             ),
           );
         } else {
           emit(TbmDashboardError(data['message'] ?? "Lỗi lấy dữ liệu"));
         }
       } else {
-        emit(TbmDashboardError("Lỗi kết nối máy chủ: ${response.statusCode}"));
+        emit(
+          TbmDashboardError("Lỗi kết nối máy chủ: ${responseStats.statusCode}"),
+        );
       }
     } catch (e) {
       emit(TbmDashboardError("Lỗi hệ thống: ${e.toString()}"));
