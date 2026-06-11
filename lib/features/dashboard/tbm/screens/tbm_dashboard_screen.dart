@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_state.dart';
-
-// ⚠️ SỬA LẠI ĐƯỜNG DẪN IMPORT 3 FILE BLOC NÀY CHO ĐÚNG VỚI MÁY CỦA ÔNG NHÉ
 
 class TbmDashboardScreen extends StatefulWidget {
   final String departmentId;
@@ -15,15 +14,9 @@ class TbmDashboardScreen extends StatefulWidget {
 }
 
 class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
-  // Bỏ hết mấy biến số liệu giả đi, chỉ giữ lại state của AI thôi
-  bool isAILoading = false;
-  bool hasAIResult = false;
-  int currentWeek = 4; // Tuần hiện tại có thể thay đổi
-
   @override
   void initState() {
     super.initState();
-    // 💡 Vừa mở màn hình lên là gọi BLoC lấy số liệu thật liền!
     context.read<TbmDashboardBloc>().add(
       LoadTbmDashboardStats(widget.departmentId),
     );
@@ -47,68 +40,47 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
         centerTitle: true,
         backgroundColor: const Color(0xFF2196F3),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.business_center,
-                  size: 18,
-                  color: Color(0xFF2196F3),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  "BỘ MÔN: ${widget.departmentId}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF2196F3),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
+      body: BlocBuilder<TbmDashboardBloc, TbmDashboardState>(
+        builder: (context, state) {
+          if (state is TbmDashboardLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.blueAccent),
+            );
+          } else if (state is TbmDashboardError) {
+            return Center(
+              child: Text(
+                state.message,
+                style: const TextStyle(color: Colors.red),
+              ),
+            );
+          } else if (state is TbmDashboardLoaded) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.business_center,
+                        size: 18,
+                        color: Color(0xFF2196F3),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "BỘ MÔN: ${widget.departmentId}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF2196F3),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // 💡 BLOC BUILDER VẼ CÁC THẺ THỐNG KÊ TỪ DATA THẬT
-            BlocBuilder<TbmDashboardBloc, TbmDashboardState>(
-              builder: (context, state) {
-                if (state is TbmDashboardLoading) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                  );
-                } else if (state is TbmDashboardError) {
-                  return Center(
-                    child: Text(
-                      state.message,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                } else if (state is TbmDashboardLoaded) {
-                  return GridView.count(
+                  const SizedBox(height: 16),
+                  GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 2,
@@ -141,47 +113,77 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
                         Colors.red,
                       ),
                     ],
-                  );
-                }
-                return const SizedBox.shrink(); // Initial state
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // KHU VỰC AI ĐÃ SỬA LẠI NỀN TRẮNG
-            Expanded(child: _buildAIBoard()),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () {
-          if (isAILoading) return;
-          setState(() {
-            isAILoading = true;
-            hasAIResult = false;
-          });
-          Future.delayed(const Duration(seconds: 3), () {
-            if (mounted) {
-              setState(() {
-                isAILoading = false;
-                hasAIResult = true;
-              });
-            }
-          });
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(child: _buildAIBoard(state)),
+                ],
+              ),
+            );
+          }
+          return const SizedBox();
         },
-        backgroundColor: const Color(0xFF2196F3),
-        icon: const Icon(Icons.auto_awesome, color: Colors.white),
-        label: const Text(
-          "AI Thống kê",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+      ),
+      floatingActionButton: BlocBuilder<TbmDashboardBloc, TbmDashboardState>(
+        builder: (context, state) {
+          bool isDisabled = true;
+          bool isLoading = false;
+
+          if (state is TbmDashboardLoaded) {
+            isLoading = state.isAILoading;
+
+            // 💡 LOGIC CHẶN NÚT (Dùng compareTo cho chắc cốp)
+            if (state.hasBatch &&
+                state.outlineDeadline != null &&
+                state.reportW10Deadline != null) {
+              DateTime now = TimeManager.now();
+
+              // Nếu Giờ Máy >= Hạn Đề Cương VÀ Giờ Máy <= Hạn Cuối W10
+              if (now.compareTo(state.outlineDeadline!) >= 0 &&
+                  now.compareTo(state.reportW10Deadline!) <= 0) {
+                isDisabled = false; // Mở khóa xanh rờn!
+              }
+            }
+
+            isDisabled = isDisabled || isLoading;
+          }
+
+          return FloatingActionButton.extended(
+            heroTag: null,
+            onPressed: isDisabled
+                ? null
+                : () {
+                    context.read<TbmDashboardBloc>().add(
+                      GenerateAIStatsEvent(
+                        deptId: widget.departmentId,
+                        weekNum: 1, // Để 1, sang kia PHP tự tính
+                      ),
+                    );
+                  },
+            backgroundColor: isDisabled ? Colors.grey : const Color(0xFF2196F3),
+            icon: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.auto_awesome, color: Colors.white),
+            label: Text(
+              isLoading ? "Đang xử lý..." : "AI Thống kê",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAIBoard() {
+  Widget _buildAIBoard(TbmDashboardLoaded state) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -189,41 +191,76 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade200, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: _buildAIContent(),
+      child: _buildAIContent(state),
     );
   }
 
-  Widget _buildAIContent() {
-    if (isAILoading) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(
-            color: Colors.blueAccent,
-            strokeWidth: 3,
+  Widget _buildAIContent(TbmDashboardLoaded state) {
+    if (!state.hasBatch) {
+      return Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.event_busy, size: 50, color: Colors.grey.shade400),
+              const SizedBox(height: 12),
+              const Text(
+                "Hiện chưa có Đợt đồ án nào được mở.",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            "AI đang thống kê tiến độ Tuần $currentWeek...",
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              color: Colors.grey.shade500,
-              fontSize: 14,
-            ),
-          ),
-        ],
+        ),
       );
     }
 
-    if (hasAIResult) {
+    if (state.isAILoading) {
+      return const Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                color: Colors.blueAccent,
+                strokeWidth: 3,
+              ),
+              SizedBox(height: 16),
+              Text(
+                "AI đang phân tích tiến độ hệ thống...",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (state.aiError != null) {
+      return Center(
+        child: SingleChildScrollView(
+          child: Text(
+            state.aiError!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (state.aiSummary != null) {
       return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,9 +273,9 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
                   size: 22,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  "Thống kê Tuần $currentWeek",
-                  style: const TextStyle(
+                const Text(
+                  "Thống kê Tiến độ AI",
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: Colors.black87,
@@ -250,67 +287,36 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(height: 1),
             ),
-            _buildResultRow(
-              Icons.analytics_outlined,
-              Colors.blue,
-              "Tổng hợp: 85% sinh viên hoàn thành mốc báo cáo.",
-            ),
-            const SizedBox(height: 12),
-            _buildResultRow(
-              Icons.bug_report_outlined,
-              Colors.orange,
-              "Cảnh báo: 3 nhóm đang gặp lỗi cấu hình Database.",
-            ),
-            const SizedBox(height: 12),
-            _buildResultRow(
-              Icons.copy_all_outlined,
-              Colors.red,
-              "Phát hiện nội dung tương đồng cao tại 1 báo cáo.",
-            ),
-            const SizedBox(height: 20),
             Text(
-              "Dữ liệu được trích xuất từ các tệp tin .docx gửi về máy chủ ICTU.",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-                fontStyle: FontStyle.italic,
+              state.aiSummary!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.5,
               ),
             ),
+            const SizedBox(height: 60),
           ],
         ),
       );
     }
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.insights_rounded, size: 50, color: Colors.grey.shade300),
-        const SizedBox(height: 12),
-        Text(
-          "Sẵn sàng phân tích dữ liệu bộ môn",
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultRow(IconData icon, Color color, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: color, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              height: 1.4,
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.insights_rounded, size: 50, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            const Text(
+              "Nhấn nút bên dưới để phân tích báo cáo",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -326,13 +332,6 @@ class _TbmDashboardScreenState extends State<TbmDashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

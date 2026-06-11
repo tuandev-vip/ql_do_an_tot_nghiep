@@ -1,7 +1,7 @@
 class AppUrls {
   // Thay địa chỉ IP bằng IP máy tính của bạn khi dùng máy thật
   // Hoặc dùng 10.0.2.2 nếu dùng Android Emulator
-  static const String baseUrl = "http://192.168.1.109/ql_do_an_api";
+  static const String baseUrl = "http://192.168.1.137/ql_do_an_api";
 
   // --- Auth Endpoints ---
   static const String urlLogin = "$baseUrl/auth/login.php";
