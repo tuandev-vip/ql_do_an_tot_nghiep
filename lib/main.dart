@@ -5,6 +5,7 @@ import 'package:ql_do_an_tot_nghiep/features/auth/presentation/bloc/auth_bloc.da
 import 'package:ql_do_an_tot_nghiep/features/auth/presentation/screens/login_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/bloc/batch_event.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/admin/bloc/admin_dashboard_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/user/presentation/bloc/user_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/registration/presentation/bloc/registration_bloc.dart';
@@ -25,6 +26,7 @@ void main() async {
         BlocProvider(create: (context) => BatchBloc()..add(LoadBatchesEvent())),
         BlocProvider(create: (context) => UserBloc()..add(FetchUsersEvent())),
         BlocProvider(create: (context) => RegistrationBloc()),
+        BlocProvider(create: (context) => AdminDashboardBloc()),
       ],
       child: const MyApp(),
     ),
