@@ -7,6 +7,8 @@ import 'package:ql_do_an_tot_nghiep/features/auto_assignment/presentation/screen
 import 'package:ql_do_an_tot_nghiep/features/batch/presentation/screens/batch_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/create_council/presentation/screens/council_management_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/student/bloc/student_dashboard_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/dashboard/student/screens/student_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/bloc/tbm_dashboard_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/tbm/screens/tbm_dashboard_screen.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/screens/teacher_dashboard_screen.dart';
@@ -77,7 +79,14 @@ class _MainWrapperState extends State<MainWrapper> {
         );
         break;
       case 'STUDENT':
-        homeScreen = _buildPlaceholderScreen("Dashboard Sinh viên");
+        homeScreen = BlocProvider(
+          key:
+              UniqueKey(), // Vẫn xài bùa UniqueKey để ép load lại mỗi lần ấn tab
+          create: (context) => StudentDashboardBloc(),
+          child: StudentDashboardScreen(
+            studentId: widget.userData.id.toString(), // Truyền ID sinh viên vào
+          ),
+        );
         break;
       default:
         homeScreen = _buildPlaceholderScreen("Trang chủ");

@@ -17,7 +17,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _newPassController = TextEditingController();
   bool _isLoading = false;
 
-  // 1. Hàm hiển thị thông báo (Để riêng ra ngoài cho sạch)
+  // Biến trạng thái cho mắt thần
+  bool _isObscureOld = true;
+  bool _isObscureNew = true;
+
   void showSnackBar(String message, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -25,7 +28,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
-  // 2. Hàm xử lý cập nhật mật khẩu (Gộp lại thành 1 hàm duy nhất)
   Future<void> _updatePassword() async {
     String oldPass = _oldPassController.text.trim();
     String newPass = _newPassController.text.trim();
@@ -47,7 +49,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         },
       );
 
-      // In ra để debug nếu gặp lỗi FormatException
       debugPrint("Server response: ${response.body}");
 
       final data = jsonDecode(response.body);
@@ -64,7 +65,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       }
     } catch (e) {
       debugPrint("Lỗi cụ thể: $e");
-      // Sửa lỗi thiếu dấu ; ở đây
       showSnackBar("Lỗi kết nối hoặc định dạng dữ liệu!", Colors.red);
     } finally {
       if (mounted) {
@@ -76,28 +76,63 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("ĐỔI MẬT KHẨU"), centerTitle: true),
+      appBar: AppBar(
+        // 💡 Chữ ĐỔI MẬT KHẨU màu trắng, in đậm
+        title: const Text(
+          "ĐỔI MẬT KHẨU",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent, // 💡 Nền AppBar màu xanh
+        elevation: 0,
+        // 💡 Nút Back màu trắng
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(25.0),
         child: Column(
           children: [
             TextField(
               controller: _oldPassController,
-
-              decoration: const InputDecoration(
+              obscureText: _isObscureOld, // Gắn biến ẩn/hiện
+              decoration: InputDecoration(
                 labelText: "Mật khẩu cũ",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.lock_outline),
+                // 💡 NÚT MẮT THẦN 1
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isObscureOld ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isObscureOld = !_isObscureOld;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _newPassController,
-
-              decoration: const InputDecoration(
+              obscureText: _isObscureNew, // Gắn biến ẩn/hiện
+              decoration: InputDecoration(
                 labelText: "Mật khẩu mới",
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.vpn_key_outlined),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.vpn_key_outlined),
+                // 💡 NÚT MẮT THẦN 2
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isObscureNew ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isObscureNew = !_isObscureNew;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 40),
@@ -105,7 +140,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                // Khi đang loading thì disable nút (truyền null)
                 onPressed: _isLoading ? null : _updatePassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2196F3),
