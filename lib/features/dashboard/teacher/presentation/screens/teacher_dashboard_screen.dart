@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// 💡 CÁC IMPORT BLOC CỦA ÔNG
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/bloc/teacher_dashboard_bloc.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/bloc/teacher_dashboard_event.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/bloc/teacher_dashboard_state.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/widgets/student_dashboard_details.dart';
-
-// 💡 IMPORT 3 CÁI WIDGET VỪA TÁCH
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/widgets/total_students_card.dart';
 import 'package:ql_do_an_tot_nghiep/features/dashboard/teacher/presentation/widgets/dashboard_empty_state.dart';
+
+// 💡 NHỚ IMPORT THÊM 2 FILE CỦA NOTIFICATION SCREEN
+import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/bloc/notification_bloc.dart';
+import 'package:ql_do_an_tot_nghiep/features/notifications/presentation/screens/notification_screen.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
   final int teacherId;
@@ -36,14 +37,69 @@ class TeacherDashboardScreen extends StatelessWidget {
           backgroundColor: const Color(0xFF2962FF),
           elevation: 0,
           actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none,
-                color: Colors.white,
-                size: 28,
-              ),
-              onPressed: () {},
+            // 💡 BỌC BLOCBUILDER Ở ĐÂY ĐỂ VẼ CHẤM ĐỎ
+            BlocBuilder<TeacherDashboardBloc, TeacherDashboardState>(
+              builder: (context, state) {
+                bool unread = false;
+                if (state is DashboardLoaded) {
+                  unread = state.hasUnread;
+                }
+
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () async {
+                        // 1. Chuyển hướng sang màn thông báo
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider(
+                              create: (context) => NotificationBloc(),
+                              child: NotificationScreen(
+                                userId: teacherId
+                                    .toString(), // Đổi sang chữ vì NotificationScreen yêu cầu String
+                                role: "GIANG_VIEN",
+                              ),
+                            ),
+                          ),
+                        );
+
+                        // 2. Quay về thì gọi Load lại để mất chấm đỏ
+                        if (context.mounted) {
+                          context.read<TeacherDashboardBloc>().add(
+                            FetchTeacherDashboard(teacherId),
+                          );
+                        }
+                      },
+                    ),
+                    // VẼ CHẤM ĐỎ
+                    if (unread)
+                      Positioned(
+                        right: 12,
+                        top: 12,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 10,
+                            minHeight: 10,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
+            const SizedBox(width: 8),
           ],
         ),
         body: BlocBuilder<TeacherDashboardBloc, TeacherDashboardState>(
@@ -92,7 +148,6 @@ class TeacherDashboardScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
 
-                            // 💡 KHÔNG ĐƯỢC CÓ DẤU PHẨY Ở CUỐI MẤY DÒNG NÀY NHA
                             if (state.viewStatus == 'NO_BATCH')
                               const DashboardEmptyState(
                                 message: "Hiện tại chưa có đợt đồ án.",
