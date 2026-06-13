@@ -80,7 +80,14 @@ class StudentReportRepository {
     required int weekNum,
     required String filePath,
   }) async {
-    final url = Uri.parse(AppUrls.submitReport);
+    // 💡 LẤY GIỜ ẢO NHƯ ÔNG ĐÃ LÀM Ở TRÊN
+    final int currentTimestamp =
+        TimeManager.now().millisecondsSinceEpoch ~/ 1000;
+
+    // 💡 GẮN ĐUÔI FAKE TIME VÀO URL
+    final url = Uri.parse(
+      '${AppUrls.submitReport}?fake_time=$currentTimestamp',
+    );
 
     var request = http.MultipartRequest('POST', url);
 
@@ -111,7 +118,13 @@ class StudentReportRepository {
     required int reportId,
     required String feedback,
   }) async {
-    final url = Uri.parse(AppUrls.updateReportFeedback);
+    final int currentTimestamp =
+        TimeManager.now().millisecondsSinceEpoch ~/ 1000;
+
+    // 💡 Gắn đuôi fake time vào URL
+    final url = Uri.parse(
+      '${AppUrls.updateReportFeedback}?fake_time=$currentTimestamp',
+    );
 
     try {
       final response = await http.post(

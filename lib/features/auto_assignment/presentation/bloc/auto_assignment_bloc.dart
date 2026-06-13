@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 import '../../../../core/constants/app_urls.dart';
 import '../../data/models/auto_assignment_model.dart';
 import 'auto_assignment_event.dart';
@@ -35,7 +36,7 @@ class AutoAssignmentBloc
       try {
         final response = await http.post(
           Uri.parse(
-            "${AppUrls.baseUrl}/api/teacher/process_auto_assignment.php",
+            "${AppUrls.baseUrl}/api/teacher/process_auto_assignment.php?fake_time=${TimeManager.now().millisecondsSinceEpoch ~/ 1000}",
           ),
           body: json.encode({'dept_id': event.deptId}),
           headers: {"Content-Type": "application/json"},

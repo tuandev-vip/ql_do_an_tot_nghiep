@@ -71,8 +71,12 @@ class TeacherGradeBloc extends Bloc<TeacherGradeEvent, TeacherGradeState> {
   ) async {
     emit(TeacherGradeLoading()); // Hiện loading khi đang gửi API
     try {
+      // 💡 1. LẤY GIỜ ẢO ĐỔI RA GIÂY (Giống hệt hàm trên)
+      int fakeTime = TimeManager.now().millisecondsSinceEpoch ~/ 1000;
+
       final response = await http.post(
-        Uri.parse(AppUrls.updateStudentGrade),
+        // 💡 2. GẮN ĐUÔI FAKE TIME VÀO URL GỌI API CHỐT ĐIỂM
+        Uri.parse("${AppUrls.updateStudentGrade}?fake_time=$fakeTime"),
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "student_id": event.studentId,

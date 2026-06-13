@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:ql_do_an_tot_nghiep/core/untils/time_manager.dart';
 
 import '../../../../core/constants/app_urls.dart';
 import '../../data/models/project_outline_model.dart';
@@ -42,7 +43,9 @@ class ProjectOutlineBloc
       try {
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse(AppUrls.urlUpdateProjectOutline),
+          Uri.parse(
+            "${AppUrls.urlUpdateProjectOutline}?fake_time=${TimeManager.now().millisecondsSinceEpoch ~/ 1000}",
+          ),
         );
 
         // Gửi các trường văn bản

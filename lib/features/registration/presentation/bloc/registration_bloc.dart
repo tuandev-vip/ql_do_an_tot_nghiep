@@ -103,7 +103,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<SubmitRegistrationEvent>((event, emit) async {
       try {
         final response = await http.post(
-          Uri.parse(AppUrls.urlSubmitRegistrationTeachers),
+          Uri.parse(
+            "${AppUrls.urlSubmitRegistrationTeachers}?fake_time=${TimeManager.now().millisecondsSinceEpoch ~/ 1000}",
+          ),
           body: {
             'teacher_id': event.teacherId,
             'topic_direction': event.topicDirection,
@@ -177,7 +179,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<UpdateStudentStatusEvent>((event, emit) async {
       try {
         final response = await http.post(
-          Uri.parse("${AppUrls.baseUrl}/api/teacher/approve_registration.php"),
+          Uri.parse(
+            "${AppUrls.baseUrl}/api/teacher/approve_registration.php?fake_time=${TimeManager.now().millisecondsSinceEpoch ~/ 1000}",
+          ),
           // Đảm bảo ép kiểu dữ liệu gửi lên là JSON
           headers: {"Content-Type": "application/json"},
           body: json.encode({
