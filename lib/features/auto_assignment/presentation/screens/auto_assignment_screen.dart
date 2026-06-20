@@ -246,7 +246,7 @@ class _AutoAssignmentScreenState extends State<AutoAssignmentScreen> {
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Xuất file Excel thành công!"),
+                      content: Text("Đã tải file về tệp của tôi!"),
                       backgroundColor: Colors.green,
                     ),
                   );
